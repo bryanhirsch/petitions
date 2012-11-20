@@ -59,9 +59,8 @@
   </div>
 <?php else: ?>
  <div id="petitions-removed">
-   <a id="button-view-white-house-petitions" href="/petitions"><?php print t('View White House Petitions'); ?></a>
    <?php print $flagged_text; ?>
-   
+
    <?php print $flagged_text_owner; ?>
    <a id="button-view-white-house-petitions" href="/petitions"><?php print t('View White House Petitions'); ?></a>
  </div>
