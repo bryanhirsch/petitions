@@ -31,9 +31,6 @@ function mongodb($alias = 'default') {
   $db = $connection['db'];
   if (!isset($mongo_objects[$host][$db])) {
     try {
-      $options = variable_get('mongodb_options', array()) + array(
-        'persist' => '1', // Use persistent connection by default.
-      );
       $mongo = new Mongo($host, $options);
       $mongo_objects[$host][$db] = $mongo->selectDB($db);
       $mongo_objects[$host][$db]->connection = $mongo;
