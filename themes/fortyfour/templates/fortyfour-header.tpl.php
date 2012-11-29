@@ -21,7 +21,7 @@
 <!--/#wh-header-title-->
 <div id="hdr-emblem">
   <a href="https://wwws.whitehouse.gov/" class="active">
-    <img src="/profiles/petitions/themes/petitions/img/clear.gif" alt="The White House Emblem" title="" width="1" height="1">
+    <img src="/profiles/petitions/themes/fortyfour/img/clear.gif" alt="The White House Emblem" title="" width="1" height="1">
   </a>
 </div>
 <!--/#hdr emblem-->
