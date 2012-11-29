@@ -90,7 +90,7 @@
                 <div class="content">
                   <p class="menu-feature-title"><a href="https://wwws.whitehouse.gov/briefing-room/disclosures/visitor-records?utm_source=wh&amp;utm_medium=tout&amp;utm_campaign=menu">A Commitment to Transparency</a></p>
                   <p>Browse White House visitor logs</p>
-                  <p><a href="https://wwws.whitehouse.gov/briefing-room/disclosures/visitor-records?utm_source=wh&amp;utm_medium=tout&amp;utm_campaign=menu"><img src="/profiles/petitions/themes/fortyfour/img/menu_visitor_records.jpg" alt="President Obama greets White House visitors"></a></p>
+                  <p><a href="https://wwws.whitehouse.gov/briefing-room/disclosures/visitor-records?utm_source=wh&amp;utm_medium=tout&amp;utm_campaign=menu"><img src="/profiles/petitions/themes/fortyfour/images/menu_visitor_records.jpg" alt="President Obama greets White House visitors"></a></p>
                   <a id="context-block-nodeblock-43309" class="context-block editable edit-whitehouse-general-menu-features"></a><a id="context-block-nodeblock-43309" class="context-block editable edit-whitehouse-general-menu-features"></a></div>
               </div>
             </div>
