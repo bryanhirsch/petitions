@@ -32,7 +32,7 @@
           <?php print l(t("Learn about Petition Thresholds"), $petition_goals_link, array('attributes' => array('class' => array('no-follow')))); ?>
           <div id="threshold-tooltip" class="tooltip display-none no-follow">
             <?php print variable_get('wh_petitions_tooltip_threshold', ''); ?>
-            <div class="tip-arrow-down"><img src="/profiles/petition/themes/petitions/img/tip-arrow-down.gif"></div>
+            <div class="tip-arrow-down"><img src="/profiles/petitions/themes/petitions44/img/tip-arrow-down.gif"></div>
           </div>
         </div>
       </div>
