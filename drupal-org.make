@@ -1,4 +1,4 @@
-; Petition
+; Petitions
 ; ---------
 
 ; Core version
