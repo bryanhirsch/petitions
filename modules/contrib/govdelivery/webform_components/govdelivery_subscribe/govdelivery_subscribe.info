@@ -1,0 +1,14 @@
+name = GovDelivery Subscribe
+description = Provides a Webform 3 component for subscribing to GovDelivery mailing lists
+package = GovDelivery Webform Components
+core = 7.x
+
+dependencies[] = govdelivery
+dependencies[] = webform
+
+; Information added by drupal.org packaging script on 2012-08-25
+version = "7.x-1.0-alpha1"
+core = "7.x"
+project = "govdelivery"
+datestamp = "1345856239"
+

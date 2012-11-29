@@ -1,0 +1,246 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall routines for the wh_petitions module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function wh_petitions_install() {
+  _wh_petitions_create_menu();
+  _wh_petitions_set_as_primary_menu();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function wh_petitions_uninstall() {
+   // Remove menu and all its links.
+  menu_delete(menu_load('petitions-menu'));
+
+  // Notify user.
+  $message = t('Petitions Menu has been deleted.');
+  drupal_set_message($message, 'status');
+}
+
+/**
+ * Implement hook_mongodb_indexes().
+ */
+function wh_petitions_mongodb_indexes() {
+  $indexes = array();
+
+  $indexes['petitions']['response_status'] = array(
+    'columns' => array(
+      'response_status' => 1,
+    ),
+    'options' => array(
+      'name' => 'response_status_asc',
+    ),
+  );
+
+  $indexes['petitions']['title'] = array(
+    'columns' => array(
+      'title' => 1,
+    ),
+    'options' => array(
+      'name' => 'title_asc',
+    ),
+  );
+
+  $indexes['petitions']['signature_count'] = array(
+    'columns' => array(
+      'signature_count' => -1,
+    ),
+    'options' => array(
+      'name' => 'signature_count_desc',
+    ),
+  );
+
+  $indexes['petitions']['published'] = array(
+    'columns' => array(
+      'published' => -1,
+    ),
+    'options' => array(
+      'name' => 'published_desc',
+    ),
+  );
+
+  $indexes['petitions']['reached_public'] = array(
+    'columns' => array(
+      'reached_public' => -1,
+    ),
+    'options' => array(
+      'name' => 'reached_public_desc',
+    ),
+  );
+
+  $indexes['petitions']['title_keywords'] = array(
+    'columns' => array(
+      'title_keywords' => 1,
+    ),
+    'options' => array(
+      'name' => 'title_keywords_asc',
+    ),
+  );
+
+  $indexes['petitions']['body_keywords'] = array(
+    'columns' => array(
+      'body_keywords' => 1,
+    ),
+    'options' => array(
+      'name' => 'body_keywords_asc',
+    ),
+  );
+
+  $indexes['petitions']['nice_url'] = array(
+    'columns' => array(
+      'nice_url' => 1,
+    ),
+    'options' => array(
+      'name' => 'nice_url_asc',
+    ),
+  );
+
+  $indexes['petitions']['created'] = array(
+    'columns' => array(
+      'created' => -1,
+    ),
+    'options' => array(
+      'name' => 'created_desc',
+    ),
+  );
+
+  $indexes['petitions']['signature_count'] = array(
+    'columns' => array(
+      'signature_count' => 1,
+    ),
+    'options' => array(
+      'name' => 'signature_count_asc',
+    ),
+  );
+
+  $indexes['petitions']['published'] = array(
+    'columns' => array(
+      'published' => 1,
+    ),
+    'options' => array(
+      'name' => 'published_asc',
+    ),
+  );
+
+  $indexes['petitions']['reached_public'] = array(
+    'columns' => array(
+      'reached_public' => 1,
+    ),
+    'options' => array(
+      'name' => 'reached_public_asc',
+    ),
+  );
+
+  $indexes['petitions']['response_status'] = array(
+    'columns' => array(
+      'response_status' => 1,
+    ),
+    'options' => array(
+      'name' => 'response_status_asc',
+    ),
+  );
+
+  $indexes['petitions']['petition_status'] = array(
+    'columns' => array(
+      'petition_status' => 1,
+    ),
+    'options' => array(
+      'name' => 'petition_status_asc',
+    ),
+  );
+
+  $indexes['petitions']['issues_petition_status_hidden_signature_count_desc'] = array(
+    'columns' => array(
+      'issues' => 1,
+      'petition_status' => 1,
+      'hidden' => 1,
+      'signature_count' => -1,
+    ),
+    'options' => array(
+      'name' => 'issues_petition_status_hidden_signature_count_desc',
+    ),
+  );
+
+  $indexes['petitions']['timestamp'] = array(
+    'columns' => array(
+      'timestamp' => 1,
+    ),
+    'options' => array(
+      'name' => 'timestamp_asc',
+    ),
+  );
+
+  $indexes['petitions']['signature_count_review_threshold_mail_sent_petition_status_asc'] = array(
+    'columns' => array(
+      'signature_count' => 1,
+      'review_threshold_mail_sent' => 1,
+      'petition_status' => 1,
+    ),
+    'options' => array(
+      'name' => 'signature_count_review_threshold_mail_sent_petition_status_asc',
+    ),
+  );
+
+  return $indexes;
+}
+
+/**
+ * Create Petitions Menu.
+ */
+function _wh_petitions_create_menu() {
+	// Create Petitions Menu.
+	if (!menu_load('petitions-menu')) {
+	  $menu = array(
+      'menu_name' => 'petitions-menu',
+      'title' => 'Petitions Menu',
+      'description' => 'Default Main Menu for Petitions install profile.'
+	  );    
+	  menu_save($menu);
+	  // Notify user about what we just did.
+	  $message = t("Petitions Main Menu has been created.");
+	  drupal_set_message($message, 'status');
+  }
+  else {
+    // Notify user.
+    $message = t("Petitions Menu already exists.");
+    drupal_set_message($message, 'warning');
+  }
+}
+
+/**
+ * Set Petitions Menu as a primary menu.
+ */
+function _wh_petitions_set_as_primary_menu() {
+  variable_set('menu_main_links_source', 'petitions-menu');
+
+  // Notify user about what we just did.
+  $message = t("Petitions Menu has been set as your site's Primary Menu.");
+  drupal_set_message($message, 'status');
+
+  // Set homepage as <front> (from wh_petition_tool module).
+  variable_set('site_frontpage', 'homepage');
+  // Notify user about what we just did.
+  $message = t("The path !homepage has been set as your front page.", array('!homepage' => l('homepage', 'homepage')));
+  drupal_set_message($message, 'status');
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Create Petition Menu and make it the site's Main Menu.
+ */
+function wh_petitions_update_7104(&$sandbox) {
+  // A number of menu items are newly being associated with the menu
+  // named petitions-menu. Rebuild menus to drupal knows this.
+  menu_rebuild();
+  // Now save new.
+  wh_petitions_install();
+}

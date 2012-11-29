@@ -1,0 +1,17 @@
+name = GovDelivery
+description = Integrates drupal mail with a different outbound mail system (non smtp)
+package = Administration
+project = "Other"
+core = 7.x
+
+files[] = govdelivery.mail.inc
+files[] = libraries/odmService.php
+files[] = libraries/GovDeliverySubscriberAPI.php
+
+
+; Information added by drupal.org packaging script on 2012-08-25
+version = "7.x-1.0-alpha1"
+core = "7.x"
+project = "govdelivery"
+datestamp = "1345856239"
+

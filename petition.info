@@ -1,0 +1,49 @@
+name = Petitions
+description = Install Petitions (built by the White House to power petitions.whitehouse.gov)
+
+core = 7.x
+version = VERSION
+
+; core
+dependencies[] = block
+dependencies[] = color
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = dashboard
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = syslog
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = toolbar
+dependencies[] = overlay
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+
+; contrib
+dependencies[] = context
+dependencies[] = context_ui
+dependencies[] = entity
+dependencies[] = entitycache
+dependencies[] = features
+dependencies[] = imce
+dependencies[] = mongodb
+dependencies[] = pathauto
+dependencies[] = wysiwyg
+
+; custom
+dependencies[] = front_class
+dependencies[] = is_not_cached
+dependencies[] = petitions_homepage
+dependencies[] = petitions_maintenance
+dependencies[] = petitions_usermenu
+
+; files
+files[] =  petition.profile
