@@ -48,30 +48,39 @@ Update steps:
        drush sqlq 'UPDATE registry_file SET filename = replace (filename, "profiles/petition", "profiles/petitions");'
 
 
+  6. Add this line to your settings.php
+
+       $conf['install_profile'] = 'petitions';
+
+     NOTE: If you have anything in your settings.php or anywhere else in you Petitions installation hardcoded to
+     profiles/petition (for example the path to a memcache module include file), replace that with 'profile/petitions'
+     too.
+
+
   Now you are ready to update:
 
-  6. Deploy 7.x-1.0-alpha24 in your environment.
+  7. Deploy 7.x-1.0-alpha24 in your environment.
 
 
-  7. Clear your cache, run update.php, and then run registry rebuild.
+  8. Clear your cache, run update.php, and then run registry rebuild.
 
        drush cc all
        drush updb
        drush rr
 
 
-  8. Re-enable modules previously disabled (and the dependencies disabled with them).
+  9. Re-enable modules previously disabled (and the dependencies disabled with them).
 
        drush en entity entity_token rules logintoboggan_rules profile2 petitions_user_registration rules_admin wh_user_profile wh_petitions wh_contexts wh_zipcodelookup wh_core wh_misc wh_petition_reporting wh_petition_tool wh_profile_migrate wh_response -y
 
        drush en entitycache context feeds feeds_ui taxonomy_sync -y
 
 
-  9. Clear your cache, run update.php, and then run registry rebuild.
+  10. Clear your cache, run update.php, and then run registry rebuild.
 
        drush cc all
        drush updb
        drush rr
 
 
-  10. Put your site back online.
+  11. Put your site back online.
