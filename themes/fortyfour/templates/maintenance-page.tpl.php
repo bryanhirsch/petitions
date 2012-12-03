@@ -162,8 +162,8 @@
 
   <?php print $styles; ?>
   <!--[if lt IE 9]>
-    <script src="/profiles/petitions/themes/fortyfour/js/html5shiv.js"></script>
-    <script src="/profiles/petitions/themes/fortyfour/js/html5shiv-printshiv"></script>
+    <script src="<?php print $path_to_fortyfour; ?>/js/html5shiv.js"></script>
+    <script src="<?php print $path_to_fortyfour; ?>/js/html5shiv-printshiv"></script>
   <![endif]-->
   <!--[if IE 7]>
     <link type="text/css" rel="stylesheet" media="all" href="/profiles/petitions/themes/petitions44/css/ie7.css" />
@@ -212,7 +212,7 @@
       <div class="clearfix" id="<?php echo $fortyfour_page_wrapper_class ?>-inner">
         <div id="content" class="column clearfix main-content" role="main">
           <a id="main-content"></a>
-          <img src="/profiles/petitions/themes/fortyfour/images/site_maintenance_petitions.jpg" alt="Photo of the White House under construction"/>
+          <img src="<?php print $path_to_fortyfour; ?>/images/site_maintenance_petitions.jpg" alt="Photo of the White House under construction"/>
           <div class="construction-text-wrap clear-block">
             <br>
             <div class="this-section">We the People is currently undergoing site maintenance.</div>
