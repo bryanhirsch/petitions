@@ -1,18 +1,18 @@
 <?php
 /**
  * @file
- * petitions44 main navigation static HTML storage file. This file houses the HTML that is being used to
- * generate the $fortyfour_mainnav variable in the page.tpl.php file. This should be built to match
- * the HTML of whitehouse.gov
+ * petitions44 main navigation static HTML storage file. This file houses the
+ * HTML that is being used to generate the $fortyfour_mainnav variable in the
+ * page.tpl.php file. This should be built to match the HTML of whitehouse.gov.
  *
  * Available variables:
- * None
- *
+ * $path_to_fortyfour: Dynamically generates path to fortyfour theme.
  */
 
 /**
  * @file
- * Petitions 44 theme's implementation to display main navigation content within the page.tpl.php file.
+ * Petitions 44 theme's implementation to display main navigation content within
+ * the page.tpl.php file.
  */
 ?>
 

@@ -1,17 +1,18 @@
 <?php
 /**
  * @file
- * petitions44 header static HTML storage file. This file houses the HTML that is being used to
- * generate the $fortyfour_header variable in the page.tpl.php file.
+ * petitions44 header static HTML storage file. This file houses the HTML that
+ * is being used to generate the $fortyfour_header variable in the page.tpl.php
+ * file.
  *
  * Available variables:
- * None
- *
+ * $path_to_fortyfour: Dynamically generates path to fortyfour theme.
  */
 
 /**
  * @file
- * Petitions 44 theme's implementation to display header content within the page.tpl.php file.
+ * Petitions 44 theme's implementation to display header content within the
+ * page.tpl.php file.
  */
  ?>
 

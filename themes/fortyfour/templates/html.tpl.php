@@ -62,6 +62,7 @@
  *     - no-sidebars: When no sidebar content exists.
  *     - one-sidebar and sidebar-first or sidebar-second: A combination of the
  *       two classes when only one of the two sidebars have content.
+ * - $path_to_fortyfour: Dynamically generates path to fortyfour theme.
  *
  * @see template_preprocess()
  * @see template_preprocess_html()
