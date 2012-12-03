@@ -94,12 +94,6 @@
     <script src="<?php print $path_to_fortyfour; ?>/js/html5shiv.js"></script>
     <script src="<?php print $path_to_fortyfour; ?>/js/html5shiv-printshiv"></script>
   <![endif]-->
-  <!--[if IE 7]>
-    <link type="text/css" rel="stylesheet" media="all" href="/profiles/petitions/themes/petitions44/css/ie7.css" />
-  <![endif]-->
-  <!--[if IE 6]>
-    <link type="text/css" rel="stylesheet" media="all" href="/profiles/petitions/themes/petitions44/css/ie6.css" />
-  <![endif]-->
   <?php print $scripts; ?>
 </head>
 <body class="<?php print $classes; ?>" <?php print $attributes;?>>
