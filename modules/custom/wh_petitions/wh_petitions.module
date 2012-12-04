@@ -122,7 +122,8 @@ function wh_petitions_permission() {
  * Insert variable into module template files.
  */
 function wh_petitions_preprocess(&$variables, $hook) {
-  $variables['path_to_petitions44'] = base_path() . drupal_get_path('theme', 'petitions44');
+  global $base_url;
+  $variables['path_to_petitions44'] = $base_url . '/' . drupal_get_path('theme', 'petitions44');
 }
 
 /**

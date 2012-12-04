@@ -21,11 +21,12 @@ function wh_petitions_create_petition_iframe() {
  * Displays the create petition form in the iframe
  */
 function wh_petitions_create_petition_iframe_html() {
+  global $base_url;
   $styles = drupal_get_css();
   $scripts = drupal_get_js();
   $form_html = drupal_render(drupal_get_form('wh_petitions_create_petition'));
   $messages = theme('status_messages');
-  $url = base_path() . drupal_get_path('theme', 'petitions44');
+  $url = $base_url . '/' . drupal_get_path('theme', 'petitions44');
 
   $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -67,8 +68,8 @@ function wh_petitions_create_petition_iframe_html() {
  * Step 5: Thank You Page
  */
 function wh_petitions_create_petition($form, &$form_state) {
-  global $user;
-  $url = base_path() . drupal_get_path('theme', 'petitions44');
+  global $base_url, $user;
+  $url = $base_url . '/' . drupal_get_path('theme', 'petitions44');
 
   // Only let registered users here.  Access here should be restricted by the 'create petition' permission anyway, but can't hurt to double-check.
   if (empty($user->uid)) {
@@ -230,7 +231,7 @@ function theme_wh_petition_title($variables) {
   $element = $variables['element'];
   element_set_attributes($element, array('id', 'name', 'cols', 'rows'));
   _form_set_class($element, array('form-textarea'));
-  $url = base_path() . drupal_get_path('theme', 'petitions44');
+  $url = $base_url . '/' . drupal_get_path('theme', 'petitions44');
 
   $default = !empty($element['#default_value']) ? $element['#default_value'] : t('finish the statement here');
 
@@ -557,7 +558,7 @@ function wh_petitions_create_petition_step_3($form, &$form_state) {
   $form_state['create_page'] = 3;
   $form['#prefix'] = theme('wh_petitions_create_header', array('step' => 3));
   $form['#attributes'] = array('id' => 'create-petition-form-step-3');
-  $url = base_path() . drupal_get_path('theme', 'petitions44');
+  $url = $base_url . '/' . drupal_get_path('theme', 'petitions44');
 
   // Populate with the values from a saved petition
   if (!empty($form_state['petition']['body'])) {

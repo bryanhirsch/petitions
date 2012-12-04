@@ -134,5 +134,6 @@ function fortyfour_theme($existing, $type, $theme, $path) {
  * Add path_to_fortyfour variable to all template files.
  */
 function fortyfour_preprocess(&$variables, $hook) {
-  $variables['path_to_fortyfour'] = base_path() . drupal_get_path('theme', 'fortyfour');
+  global $base_url;
+  $variables['path_to_fortyfour'] = $base_url . '/' . drupal_get_path('theme', 'fortyfour');
 }
