@@ -1,0 +1,382 @@
+<?php
+
+/**
+ * @file
+ * Generates statistics for users via Petitions Read API.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function petitions_stats_users_menu() {
+  $items = array();
+
+  $items['admin/people/stats'] = array(
+    'title' => 'User Statistics',
+    'page callback' => 'petitions_stats_users_page',
+    'access arguments' => array('view users statistics'),
+    'file' => 'petitions_stats_users.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/people/stats/%'] = array(
+    'title' => 'Users Statistics',
+    'page callback' => 'petitions_stats_users_page',
+    'page arguments' => array(3),
+    'access arguments' => array('view users statistics'),
+    'file' => 'petitions_stats_users.pages.inc',
+  );
+  $items['admin/config/services/stats/users'] = array(
+    'title' => 'Petitions Users Statistics Settings',
+    'description' => 'Configuration settings for the Petitions Users Statistics module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('petitions_stats_users_admin_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'petitions_stats_users.pages.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_perm().
+ */
+function petitions_stats_users_permission() {
+  return array(
+    'view user statistics' => array(
+      'title' => t('View Users Statistics'),
+      'description' => t('View statistics on the Users Statistics page.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function petitions_stats_users_theme($existing, $type, $theme, $path) {
+  $theme_path = drupal_get_path('module', 'petitions_stats_users') . '/theme';
+
+  return array(
+    'petitions_stats_users' => array(
+      'path' => $theme_path,
+      'template' => 'petitions-stats-users',
+      'variables' => array(
+        'date' => NULL,
+        'statistics' => NULL,
+      ),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function petitions_stats_users_cron() {
+  // Queue data fetching tasks.
+  _petitions_stats_users_queue_tasks();
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function petitions_stats_users_cron_queue_info() {
+  // Run tasks in petitions_stats_users_fetch_data queue.
+  $queues['petitions_stats_users_fetch_queue'] = array(
+    'worker callback' => '_petitions_stats_users_fetch_data',
+    'time' => 120,
+  );
+  return $queues;
+}
+
+/**
+ * Queues data fetching tasks.
+ */
+function _petitions_stats_users_queue_tasks() {
+  // Determine the number of result rows to fetch.
+  $batch_size = variable_get('psu_batch_size', 100);
+  $params = array('offset' => 0, 'limit' => $batch_size);
+  $request_url = variable_get('psu_request_url', 'http://petitions.whitehouse.gov/api/v1/users.json');
+  $response = _petitions_stats_users_request_data($request_url, $params, TRUE);
+  $count = isset($response->metadata->count) ? $response->metadata->count : 0;
+  // It's possible that our requested batch size exceeds the server's max limit.
+  // To be safe, we use the server's response limit as a control.
+  $limit = $response->metadata->limit;
+
+  // If there are rows to fetch, queue as batched tasks via Queue API.
+  // @see http://www.hashbangcode.com/blog/drupal-7-queues-api-579.html
+  if ($count) {
+    $reliable = TRUE;
+    $queue = DrupalQueue::get('petitions_stats_users_fetch_queue', $reliable);
+    $highwatermark = variable_get('petitions_stats_users_fetch_queue_highwatermark', 0);
+    // The $highwatermark indicates the last request that was queued during a
+    // previeous cron. E.g, if we've made a request for offsets of 90, 100,
+    // and 110 in the past, the highwatermark would be 110. Our new requests
+    // would be for offsets between 110 and the new $count.
+    for ($i = $highwatermark; $i < $count; $i += $limit) {
+      $item = array(
+        'url' => $request_url,
+        'params' => array(
+          'offset' => $i,
+          'limit' => $limit,
+        ),
+      );
+      $queue->createItem($item);
+    }
+
+    // Set new highwatermark. This prevents us from requesting the same data
+    // in the future.
+    variable_set('petitions_stats_users_fetch_queue_highwatermark', $count);
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Fetches and stores user data from Petitions API.
+ */
+function _petitions_stats_users_fetch_data($data) {
+  dpm($data);
+  // Request data.
+  if ($response = _petitions_stats_users_request_data($data['url'], $data['params'])) {
+    $results = $response->results;
+
+    // Save data.
+    return _petitions_stats_users_save_data($results);
+  }
+
+  return FALSE;
+}
+
+/**
+ * Makes request to Petitions API.
+ *
+ * @param (stirng) $url
+ *   The URL for this request.
+ * @param (array) $params
+ *   A PHP array of parameters to be appended to the request via $_GET.
+ */
+function _petitions_stats_users_request_data($url, $params = array()) {
+  // Set default params.
+  if (!$params) {
+    // Note that we absolutely rely on there being a default orderBy param on
+    // the server side. Without this, we could easily create duplicate entries.
+    // Our write functions are purely procedural.
+    $batch_size = variable_get('psu_batch_size', 100);
+    $params = array('offset' => 0,'limit' => $batch_size);
+  }
+
+  // Make request.
+  $request_url = url($url, array('query' => $params));
+  $curl = curl_init($request_url);
+  curl_setopt($curl, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+  curl_setopt($curl, CURLOPT_HEADER, FALSE);
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+  curl_setopt($curl, CURLOPT_FAILONERROR, TRUE);
+
+  $response = curl_exec($curl);
+  $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+  // If request was successful.
+  if ($http_code == 200) {
+    $response = json_decode($response);
+
+    return $response;
+  }
+
+  // Get and log error message.
+  $http_message = curl_error($curl);
+  watchdog('petitions_stats_users', $http_message);
+
+  return FALSE;
+}
+
+/**
+ * Saves request results.
+ *
+ * @param array $results
+ *   A numerical array of results. Each row is a user object.
+ */
+function _petitions_stats_users_save_data($results) {
+  $data_dir = variable_get('psu_data_dir', 'petitions_stats_users_data');
+  $data = array();
+
+  // Created formatted array of user data.
+  foreach ($results as $user) {
+    // Get date params.
+    $date = date('Y-m-d', $user->created);
+    $hour = date('H', $user->created);
+
+    // Save user data object in structured array.
+    $data[$date][$hour][] = array(
+      'id' => $user->id,
+    );
+  }
+
+  // Write formatted data array to disk.
+  foreach ($data as $date => $hours) {
+    foreach ($hours as $hour => $rows) {
+      // Specify directory and filename.
+      $path = $data_dir . '/' . $date . '/' . $hour;
+      $directory = file_build_uri($path);
+      $filename = 'data.json';
+
+      // Attempt to write to directory.
+      if (lock_acquire($directory)) {
+        $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
+        lock_release($directory);
+      }
+      // Wait 30s and try again.
+      elseif (lock_wait($directory)) {
+        $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
+        lock_release($directory);
+      }
+      // Fail.
+      else {
+        return FALSE;
+      }
+    }
+  }
+}
+
+/**
+ * Writes data to disk as JSON.
+ */
+function _petitions_stats_users_write_data($directory, $filename, $contents) {
+  $file_uri = $directory . '/' . $filename;
+
+  // Ensure that destination directory exists.
+  if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+    // If the file exists.
+    if (file_exists($file_uri)) {
+
+      // We know that the file exists. Let's check to see if files exist
+      // matching the pattern "/basename_[0-9]+/". If so, find URI most recent.
+      // $file_uri = _petitions_stats_users_most_recent_fileuri($directory, $filename);
+
+      // If the existing, most recent file exceeds the maximum size, create
+      // a new file following pattern "/basename_[0-9]+/".
+      $max_file_size = parse_size(variable_get('psu_max_file_size', '1MB'));
+      $size = filesize($file_uri);
+      if ($size > $max_file_size) {
+        $contents = json_encode($contents);
+        return file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
+      }
+      // Otherwise, we will append data to the existing file.
+      else {
+        // We first need to encode the new contents as JSON so that it has the
+        // same form as the content in the existing file. This is necessary
+        // because json_encode() converts some arrays into objects,
+        // fundamentally changing the data structure.
+        $contents = json_encode($contents);
+        $contents = json_decode($contents);
+
+        // Load contents of existing files.
+        $existing_file_contents = file_get_contents($file_uri);
+
+        // Ensure that existing file contents are UTF8 encoded.
+        $is_encoded = mb_detect_encoding($existing_file_contents, array('UTF-8'), TRUE);
+        if (!$is_encoded) {
+          $existing_file_contents = utf8_encode($existing_file_contents);
+        }
+        // JSON decode existing file contents.
+        $existing_file_contents = json_decode($existing_file_contents);
+
+        // Merge existing file content with new content.
+        $contents = array_merge($existing_file_contents, $contents);
+
+        // Ensure that there are no duplicate rows.
+        $contents = _petitions_stats_users_unique_json($contents);
+
+        // JSON encode new, merged data and overwrite file.
+        $contents = json_encode($contents);
+        file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_REPLACE);
+      }
+    }
+    // Create a new file containing data.
+    else {
+      $contents = json_encode($contents);
+      return file_unmanaged_save_data($contents, $file_uri);
+    }
+  }
+}
+
+/**
+ * Finds most recent file matching pattern "/basename_[0-9]+/".
+ */
+function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
+  // Get basename of file (filename without extension).
+  $pos = strrpos($filename, '.');
+  if ($pos !== FALSE) {
+    $basename = substr($basename, 0, $pos);
+    $ext = substr($basename, $pos);
+  }
+  else {
+    $basename = $filename;
+  }
+
+  $mask = '/' . $basename . '_[0-9]+/';
+  if ($existing_files = file_scan_directory($directory, $mask)) {
+    // Find the maximum numerical suffix to determine most recent file.
+    $max = NULL;
+    foreach ($existing_files as $existing_file_uri => $existing_file) {
+      $pos = strrpos($existing_file->name, '_');
+      $suffix = substr($existing_file->name, $pos + 1);
+      if ($max < $suffix) {
+        $max = $suffix;
+        $file_uri = $existing_file_uri;
+      }
+    }
+  }
+  else {
+    $file_uri = $directory . '/' . $filename;
+  }
+
+  return $file_uri;
+}
+
+/**
+ * Wipes stored data from disk, resets variables.
+ */
+function _petitions_stats_users_wipe_data() {
+  $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
+  $path = file_build_uri($data_dir);
+  if (file_unmanaged_delete_recursive($path, '_petitions_stats_users_chmod')) {
+    // Delete highwatermark.
+    variable_del('petitions_stats_users_fetch_queue_highwatermark');
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Changes file permissions to allow deletion.
+ */
+function _petitions_stats_users_chmod($uri) {
+  drupal_chmod($uri, '0660');
+}
+
+/**
+ * Ensures that JSON array contains only unique objects.
+ *
+ * @param array $merged
+ *   An array of objects.
+ *
+ * @see http://stackoverflow.com/questions/4507518/will-array-unique-work-also-with-array-of-objects#4507991
+ *
+ * @return array
+ *   An array of unique objects.
+ */
+function _petitions_stats_users_unique_json($merged) {
+  $final  = array();
+  foreach ($merged as $current) {
+    // As of PHP5, in_array() can be used on objects.
+    if (!in_array($current, $final)) {
+      $final[] = $current;
+    }
+  }
+  return $final;
+}

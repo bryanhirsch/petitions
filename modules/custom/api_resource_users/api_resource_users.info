@@ -3,3 +3,4 @@ description = Provides user for Services according to Whitehouse API Standards
 core = 7.x
 package = services
 dependencies[] = services
+dependencies[] = petitions_api

@@ -4,6 +4,7 @@ core = 7.x
 package = Features
 dependencies[] = ctools
 dependencies[] = services
+dependencies[] = rest_server
 features[ctools][] = services:services:3
 features[features_api][] = api:1
 features[services_endpoint][] = api_v1
