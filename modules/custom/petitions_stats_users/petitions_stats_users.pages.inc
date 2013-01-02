@@ -43,7 +43,7 @@ function petitions_stats_users_page($date = NULL) {
       foreach ($contents as $file_uri) {
         list($data_dir, $date, $hour, $filename) = explode('/', file_uri_target($file_uri));
         $day = array_pop(explode('/', $date_directory));
-        $data = json_decode(file_get_contents($file_uri), TRUE);
+        $data = _petitions_stats_users_load_data_file($file_uri);
 
         // If this date has not been populated, create stub.
         if (!isset($statistics['users']['creation']['dates'])) {
@@ -96,6 +96,12 @@ function petitions_stats_users_page($date = NULL) {
 
 /**
  * Form callback for date picker on users statistics page.
+ *
+ * @param string $date
+ *   A date in the form yyyy-mm-dd.
+ *
+ * @param string $format
+ *   The date format of $date, as accepted by PHP's date() function.
  */
 function petitions_stats_users_date_form($form, $form_state, $date, $format) {
   module_load_include('inc', 'date', 'date_api_elements');
@@ -132,11 +138,16 @@ function petitions_stats_users_date_form_submit($form, &$form_state) {
 function petitions_stats_users_admin_form() {
   $form = array();
 
-  $form['psu_max_file_size'] = array(
+  // This module was initially built to control file size directly. E.g., by
+  // imposing a 1MB limit on data files. However, that method of control made
+  // it very difficult to incrementally increase or decrease the contents of
+  // a data file efficiently. By controlling the array size of the JSON
+  // contents, we have more granular control.
+  $form['psu_max_array_size'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum file size'),
-    '#description' => t('The maximum file size for a given JSON file. Once the maximum is reached, a second file with a numerical suffix will be created. Size should be expressed as a number of bytes with optional SI or IEC binary unit prefix (e.g. 2, 3K, 5MB, 10G, 6GiB, 8 bytes, 9mbytes).'),
-    '#default_value' => variable_get('psu_max_file_size', '1MB'),
+    '#title' => t('Maximum array size per data file'),
+    '#description' => t('The maximum number of array rows that may be stored in a single data file. This indirectly controls the maximum size of the data file, which can have performance ramifications.'),
+    '#default_value' => variable_get('psu_max_array_size', '10000'),
   );
   $form['psu_data_dir'] = array(
     '#type' => 'textfield',
@@ -165,13 +176,13 @@ function petitions_stats_users_admin_form() {
  */
 function petitions_stats_users_admin_form_validate($form, &$form_state) {
   $values = $form_state['values'];
-  if (!is_numeric(parse_size($values['psu_max_file_size']))) {
-    form_set_error('psu_max_file_size', t('Please enter a valid file size.'));
+  if (!ctype_digit($values['psu_max_array_size']) || $values['psu_max_array_size'] < 1) {
+    form_set_error('psu_max_array_size', t('Max array size must be a positive integer.'));
   }
   if (!valid_url($values['psu_request_url'])) {
     form_set_error('psu_request_url', t('Please enter a valid URL.'));
   }
-  if (!ctype_digit($values['psu_batch_size']) || $values['psu_batch_size'] < 0) {
+  if (!ctype_digit($values['psu_batch_size']) || $values['psu_batch_size'] < 1) {
     form_set_error('psu_batch_size', t('Batch size must be a positive integer.'));
   }
 }

@@ -12,7 +12,7 @@
  */
 
 /**
- * Implement hook_drush_command().
+ * Implements hook_drush_command().
  */
 function petitions_stats_users_drush_command() {
   $items = array();
@@ -40,7 +40,7 @@ function petitions_stats_users_wipe_drush() {
     drush_log('Use petitions-stas-users-fetch to fetch new data.');
   }
   else {
-    drush_log('There was an error wiping Petitions Stats Users data.', 'error');
+    drush_log('There was an error wiping Petitions Stats Users data. Drush likely does not have access to the files that must be deleted. This can happen if the data was fetched via the web interface.', 'error');
   }
 }
 

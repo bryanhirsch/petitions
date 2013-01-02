@@ -85,10 +85,10 @@ function _api_resource_users_resource_index($created_before, $created_after, $cr
 
   // Specify conditions.
   if ($created_before) {
-    $user_select->condition('created', $created_before, '<=');
+    $user_select->condition('created', $created_before, '<');
   }
   elseif ($created_after) {
-    $user_select->condition('created', $created_after, '>=');
+    $user_select->condition('created', $created_after, '>');
   }
   elseif ($created_at) {
     $user_select->condition('created', $created_at);
@@ -193,7 +193,7 @@ function _api_resource_users_index_doc() {
   $element = array(
     '#name' => t('Index'),
     '#description' => t('Returns a list of users matching passed parameters.'),
-    '#request' => t('request'),
+    '#request' => '/api/v1/users.json?limit=100&offset=0',
     '#response' => _api_resource_users_mock_response(),
   );
 

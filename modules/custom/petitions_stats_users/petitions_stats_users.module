@@ -90,6 +90,9 @@ function petitions_stats_users_cron_queue_info() {
 
 /**
  * Queues data fetching tasks.
+ *
+ * @return boolean
+ *   Returns true if tasks were successfully queued.
  */
 function _petitions_stats_users_queue_tasks() {
   // Determine the number of result rows to fetch.
@@ -135,9 +138,18 @@ function _petitions_stats_users_queue_tasks() {
 
 /**
  * Fetches and stores user data from Petitions API.
+ *
+ * @param array $data
+ *   An associative array passed by Queue API.
+ *   - url: the url to which a fetch request will be made.
+ *   - params:
+ *     - offset: the offset parameter for the API request.
+ *     - limit: the limit parameter for the API request.
+ *
+ * @return boolean
+ *   Returns true if data was successfully requested and saved.
  */
 function _petitions_stats_users_fetch_data($data) {
-  dpm($data);
   // Request data.
   if ($response = _petitions_stats_users_request_data($data['url'], $data['params'])) {
     $results = $response->results;
@@ -156,6 +168,9 @@ function _petitions_stats_users_fetch_data($data) {
  *   The URL for this request.
  * @param (array) $params
  *   A PHP array of parameters to be appended to the request via $_GET.
+ *
+ * @return object
+ *   The response object if successful, a boolean FALSE if not.
  */
 function _petitions_stats_users_request_data($url, $params = array()) {
   // Set default params.
@@ -197,6 +212,9 @@ function _petitions_stats_users_request_data($url, $params = array()) {
  *
  * @param array $results
  *   A numerical array of results. Each row is a user object.
+ *
+ * @return boolean
+ *   Returns true only if every row in $results is successfully saved.
  */
 function _petitions_stats_users_save_data($results) {
   $data_dir = variable_get('psu_data_dir', 'petitions_stats_users_data');
@@ -238,72 +256,185 @@ function _petitions_stats_users_save_data($results) {
       }
     }
   }
+
+  return TRUE;
 }
 
 /**
- * Writes data to disk as JSON.
+ * Writes data to disk as JSON by creating new file or appending to existing.
+ *
+ * @param string $directory
+ *   The directory to which the data file will be saved.
+ * @param string $filename
+ *   The filename (with extension) to be save.
+ * @param array $data
+ *   The data array of contents to be saved to disk.
+ *
+ * @return boolean
+ *   Returns true if data was successfully written to disk.
  */
-function _petitions_stats_users_write_data($directory, $filename, $contents) {
+function _petitions_stats_users_write_data($directory, $filename, $data) {
   $file_uri = $directory . '/' . $filename;
 
   // Ensure that destination directory exists.
   if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
     // If the file exists.
     if (file_exists($file_uri)) {
-
-      // We know that the file exists. Let's check to see if files exist
-      // matching the pattern "/basename_[0-9]+/". If so, find URI most recent.
-      // $file_uri = _petitions_stats_users_most_recent_fileuri($directory, $filename);
-
-      // If the existing, most recent file exceeds the maximum size, create
-      // a new file following pattern "/basename_[0-9]+/".
-      $max_file_size = parse_size(variable_get('psu_max_file_size', '1MB'));
-      $size = filesize($file_uri);
-      if ($size > $max_file_size) {
-        $contents = json_encode($contents);
-        return file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
-      }
-      // Otherwise, we will append data to the existing file.
-      else {
-        // We first need to encode the new contents as JSON so that it has the
-        // same form as the content in the existing file. This is necessary
-        // because json_encode() converts some arrays into objects,
-        // fundamentally changing the data structure.
-        $contents = json_encode($contents);
-        $contents = json_decode($contents);
-
-        // Load contents of existing files.
-        $existing_file_contents = file_get_contents($file_uri);
-
-        // Ensure that existing file contents are UTF8 encoded.
-        $is_encoded = mb_detect_encoding($existing_file_contents, array('UTF-8'), TRUE);
-        if (!$is_encoded) {
-          $existing_file_contents = utf8_encode($existing_file_contents);
-        }
-        // JSON decode existing file contents.
-        $existing_file_contents = json_decode($existing_file_contents);
-
-        // Merge existing file content with new content.
-        $contents = array_merge($existing_file_contents, $contents);
-
-        // Ensure that there are no duplicate rows.
-        $contents = _petitions_stats_users_unique_json($contents);
-
-        // JSON encode new, merged data and overwrite file.
-        $contents = json_encode($contents);
-        file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_REPLACE);
-      }
+      // Attempt to append new contents to existing data file. If the data file
+      // has reached its maximum size, a new, suffixed one will be created.
+      return _petitions_stats_users_write_data_append($directory, $filename, $data);
     }
     // Create a new file containing data.
     else {
-      $contents = json_encode($contents);
-      return file_unmanaged_save_data($contents, $file_uri);
+      return _petitions_stats_users_write_data_create($directory, $filename, $data);
     }
   }
 }
 
 /**
+ * Writes a new data file to disk.
+ *
+ * This function may split data into multiple files to ensure that the maximum
+ * permitted JSON array size is not exceeded.
+ *
+ * @param string $directory
+ *   The directory to which the data file will be saved.
+ * @param string $filename
+ *   The filename (with extension) to be save.
+ * @param array $data
+ *   The data array of contents to be saved to disk.
+ *
+ * @return boolean
+ *   Returns true if data was successfully written to disk.
+ */
+function _petitions_stats_users_write_data_create($directory, $filename, $data) {
+  $file_uri = $directory . '/' . $filename;
+
+  // Ensure that data set does not exceed maximum array size.
+  $max_array_size = variable_get('psu_max_array_size', '10000');
+  $size = count($data);
+  if ($size > $max_array_size) {
+    // Split into two arrays: the first of acceptable size, the second
+    // containing overflow.
+    $first = array_slice($data, 0, $max_array_size - 1);
+    $second = array_slice($data, $max_array_size - 1, $size - 1);
+
+    // Save data by recursing. Note that the $second data will be written to a
+    // separate file following the naming pattern "/basename_[0-9]+/".
+    return _petitions_stats_users_write_data_create($directory, $filename, $first) &&
+    _petitions_stats_users_write_data_create($directory, $filename, $second);
+  }
+  // Otherwise, save the file normally.
+  else {
+    $contents = json_encode($data);
+    return file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
+  }
+}
+
+/**
+ * Appends data to an existing file.
+ *
+ * This function may split data into multiple files to ensure that the maximum
+ * permitted JSON array size is not exceeded.
+ *
+ * @param string $directory
+ *   The directory to which the data file will be saved.
+ * @param string $filename
+ *   The filename (with extension) to be save.
+ * @param array $data
+ *   The data array of contents to be saved to disk.
+ *
+ * @return boolean
+ *   Returns true if data was successfully written to disk.
+ */
+function _petitions_stats_users_write_data_append($directory, $filename, $data) {
+  $max_array_size = variable_get('psu_max_array_size', '10000');
+
+  // We know that the file at $file_uri exists. Let's check to see if files
+  // matching the pattern "/basename_[0-9]+/" also exist. If so, find the
+  // most recent URI.
+  $file_uri = _petitions_stats_users_most_recent_fileuri($directory, $filename);
+
+  // Load contents of existing file.
+  $existing_file_contents = _petitions_stats_users_load_data_file($file_uri);
+
+  // If the size of the existing file already equals the maximum,
+  // create a new file rather than appending data.
+  $existing_data_size = count($existing_file_contents);
+  if ($existing_data_size >= $max_array_size) {
+    return _petitions_stats_users_write_data_create($directory, $filename, $data);
+  }
+
+  // We first need to encode the new contents as JSON so that it has the
+  // same form as the content in the existing file. This is necessary
+  // because json_encode() converts some arrays into objects,
+  // fundamentally changing the data structure.
+  $new_contents = json_encode($data);
+  $new_contents = json_decode($new_contents);
+  $new_contents_size = count($new_contents);
+
+  // Merge existing file content with new content.
+  $combined_contents = array_merge($existing_file_contents, $new_contents);
+  // Ensure that there are no duplicate rows.
+  $combined_contents = _petitions_stats_users_unique_json($combined_contents);
+  $combined_contents_size = count($combined_contents);
+
+  // If the new combined data exceeds the maximum allowed size, append only
+  // permissible data, and create a new file for overflow.
+  if ($combined_contents_size > $max_array_size) {
+    // Split into two arrays: the first of acceptable size, the second
+    // containing overflow.
+    $append_contents = array_slice($combined_contents, 0, $max_array_size - 1);
+    $overflow_contents = array_slice($combined_contents, $max_array_size - 1, $combined_contents_size - 1);
+
+    // JSON encode append contents.
+    $append_contents = json_encode($append_contents);
+
+    return file_unmanaged_save_data($append_contents, $file_uri, FILE_EXISTS_REPLACE) &&
+    _petitions_stats_users_write_data_create($directory, $filename, $overflow_contents);
+  }
+
+  // JSON encode new, merged data.
+  $combined_contents = json_encode($combined_contents);
+
+  // Overwrite existing file.
+  return file_unmanaged_save_data($combined_contents, $file_uri, FILE_EXISTS_REPLACE);
+}
+
+/**
+ * Loads and parses JSON from a given data file.
+ *
+ * @param string $file_uri
+ *   The full file path of the file to be loaded.
+ *
+ * @return string
+ *   The file contents.
+ */
+function _petitions_stats_users_load_data_file($file_uri) {
+  // Load contents of existing files.
+  $existing_file_contents = file_get_contents($file_uri);
+
+  // Ensure that existing file contents are UTF8 encoded.
+  $is_encoded = mb_detect_encoding($existing_file_contents, array('UTF-8'), TRUE);
+  if (!$is_encoded) {
+    $existing_file_contents = utf8_encode($existing_file_contents);
+  }
+  // JSON decode existing file contents.
+  $existing_file_contents = json_decode($existing_file_contents);
+
+  return $existing_file_contents;
+}
+
+/**
  * Finds most recent file matching pattern "/basename_[0-9]+/".
+ *
+ * @param string $directory
+ *   The directory to which the data file will be saved.
+ * @param string $filename
+ *   The filename (with extension) to be save.
+ *
+ * @return string
+ *   The full system path of the most recently saved data file.
  */
 function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
   // Get basename of file (filename without extension).
@@ -316,7 +447,7 @@ function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
     $basename = $filename;
   }
 
-  $mask = '/' . $basename . '_[0-9]+/';
+  $mask = '/' . $basename . '_[0-9]+$/';
   if ($existing_files = file_scan_directory($directory, $mask)) {
     // Find the maximum numerical suffix to determine most recent file.
     $max = NULL;
@@ -338,25 +469,16 @@ function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
 
 /**
  * Wipes stored data from disk, resets variables.
+ *
+ * @return boolean
+ *   Returns true if all files were deleted.
  */
 function _petitions_stats_users_wipe_data() {
   $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
   $path = file_build_uri($data_dir);
-  if (file_unmanaged_delete_recursive($path, '_petitions_stats_users_chmod')) {
-    // Delete highwatermark.
-    variable_del('petitions_stats_users_fetch_queue_highwatermark');
+  variable_del('petitions_stats_users_fetch_queue_highwatermark');
 
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-/**
- * Changes file permissions to allow deletion.
- */
-function _petitions_stats_users_chmod($uri) {
-  drupal_chmod($uri, '0660');
+  return file_unmanaged_delete_recursive($path);
 }
 
 /**

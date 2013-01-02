@@ -3,3 +3,4 @@ description = Generates statistics for petitions users.
 core = 7.x
 package = Services
 dependencies[] = api_resource_users
+dependencies[] = date_api

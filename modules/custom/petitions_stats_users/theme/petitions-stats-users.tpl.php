@@ -16,10 +16,9 @@
  *           - hours: An array of user creation statistics, keyed by hour.
  *             - {hour}:
  *               - title: A string to use for front-end display.
- *               - count: Total count of new users created during the given hour.
+ *               - count: Total count of new users created during the hour.
  *               - percentage: The percentage of users created during this hour
  *                 relative to the entire day.
- *
  */
 ?>
 <h3><?php print $date; ?></h3>
