@@ -468,20 +468,6 @@ function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
 }
 
 /**
- * Wipes stored data from disk, resets variables.
- *
- * @return boolean
- *   Returns true if all files were deleted.
- */
-function _petitions_stats_users_wipe_data() {
-  $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
-  $path = file_build_uri($data_dir);
-  variable_del('petitions_stats_users_fetch_queue_highwatermark');
-
-  return file_unmanaged_delete_recursive($path);
-}
-
-/**
  * Ensures that JSON array contains only unique objects.
  *
  * @param array $merged
@@ -501,4 +487,18 @@ function _petitions_stats_users_unique_json($merged) {
     }
   }
   return $final;
+}
+
+/**
+ * Wipes stored data from disk, resets variables.
+ *
+ * @return boolean
+ *   Returns true if all files were deleted.
+ */
+function _petitions_stats_users_wipe_data() {
+  $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
+  $path = file_build_uri($data_dir);
+  variable_del('petitions_stats_users_fetch_queue_highwatermark');
+
+  return file_unmanaged_delete_recursive($path);
 }
