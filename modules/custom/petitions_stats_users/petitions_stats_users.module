@@ -151,7 +151,8 @@ function _petitions_stats_users_queue_tasks() {
  */
 function _petitions_stats_users_fetch_data($data) {
   // Request data.
-  if ($response = _petitions_stats_users_request_data($data['url'], $data['params'])) {
+  $response = _petitions_stats_users_request_data($data['url'], $data['params']);
+  if ($response) {
     $results = $response->results;
 
     // Save data.
@@ -189,6 +190,8 @@ function _petitions_stats_users_request_data($url, $params = array()) {
   curl_setopt($curl, CURLOPT_HEADER, FALSE);
   curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
   curl_setopt($curl, CURLOPT_FAILONERROR, TRUE);
+  curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+  curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
 
   $response = curl_exec($curl);
   $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -199,12 +202,20 @@ function _petitions_stats_users_request_data($url, $params = array()) {
 
     return $response;
   }
+  else {
+    // Get and log error message.
+    $http_message = curl_error($curl);
+    $vars = array(
+      '@url' => $url,
+      '@params' => var_export($params, TRUE),
+      '@http_message' => $http_message,
+      '@http_code' => $http_code,
+    );
+    $message = 'Failed to make request to @url with @params. HTTP error code @http_code with message: @http_message';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
 
-  // Get and log error message.
-  $http_message = curl_error($curl);
-  watchdog('petitions_stats_users', $http_message);
-
-  return FALSE;
+    return FALSE;
+  }
 }
 
 /**
@@ -252,6 +263,13 @@ function _petitions_stats_users_save_data($results) {
       }
       // Fail.
       else {
+        $vars = array(
+          '@filename' => $filename,
+          '@directory' => $directory,
+          '@data' => var_export($rows, TRUE),
+        );
+        $message = 'Unable to write @filename to @directory. The directory is locked.';
+        watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
         return FALSE;
       }
     }
@@ -289,6 +307,12 @@ function _petitions_stats_users_write_data($directory, $filename, $data) {
       return _petitions_stats_users_write_data_create($directory, $filename, $data);
     }
   }
+  else {
+    $vars = array('@directory' => $directory);
+    $message = 'Unable to prepare directory @directory';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
+    return FALSE;
+  }
 }
 
 /**
@@ -321,14 +345,23 @@ function _petitions_stats_users_write_data_create($directory, $filename, $data) 
 
     // Save data by recursing. Note that the $second data will be written to a
     // separate file following the naming pattern "/basename_[0-9]+/".
-    return _petitions_stats_users_write_data_create($directory, $filename, $first) &&
+    $success =  _petitions_stats_users_write_data_create($directory, $filename, $first) &&
     _petitions_stats_users_write_data_create($directory, $filename, $second);
   }
   // Otherwise, save the file normally.
   else {
     $contents = json_encode($data);
-    return file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
+    $success = file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
   }
+
+  // Log error on fail.
+  if (!$success) {
+    $vars = array('@file_uri' => $file_uri);
+    $message = 'Unable to create new file @file_uri. Note that Drupal must have write access to both the temporary and public/private file directories for this write to succeed.';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
+  }
+
+  return $success;
 }
 
 /**
@@ -398,7 +431,15 @@ function _petitions_stats_users_write_data_append($directory, $filename, $data) 
   $combined_contents = json_encode($combined_contents);
 
   // Overwrite existing file.
-  return file_unmanaged_save_data($combined_contents, $file_uri, FILE_EXISTS_REPLACE);
+  if (file_unmanaged_save_data($combined_contents, $file_uri, FILE_EXISTS_REPLACE)) {
+    return TRUE;
+  }
+  else {
+    $vars = array('@file_uri' => $file_uri);
+    $message = 'Unable to append new data to @file_uri';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
+    return FALSE;
+  }
 }
 
 /**
@@ -499,6 +540,16 @@ function _petitions_stats_users_wipe_data() {
   $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
   $path = file_build_uri($data_dir);
   variable_del('petitions_stats_users_fetch_queue_highwatermark');
+  $vars = array('@path' => $path);
 
-  return file_unmanaged_delete_recursive($path);
+  if (file_unmanaged_delete_recursive($path)) {
+    $message = 'Could not wipe Petitions Statistics Users data from @path';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
+    return TRUE;
+  }
+  else {
+    $message = 'Wiped Petitions Statistics Users data from @path.';
+    watchdog('petitions_stats_users', $message, $vars);
+    return FALSE;
+  }
 }
