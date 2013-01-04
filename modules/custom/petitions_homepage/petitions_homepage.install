@@ -25,6 +25,6 @@ function petitions_homepage_uninstall() {
  *
  * Updating the homepage content. 
  */
-function wh_core_update_7001() {
+function petitions_homepage_update_7001() {
   variable_set('petitions_homepage_more_from_the_whitehouse', petitions_homepage_more_from_the_whitehouse_default());
 }
