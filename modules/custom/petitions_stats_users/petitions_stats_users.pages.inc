@@ -34,6 +34,7 @@ function petitions_stats_users_page($date = NULL) {
 
   // Check to be sure that this is a real directory.
   if (file_exists($date_directory)) {
+    module_load_include('inc', 'petitions_stats_users', 'petitions_stats_users.files');
     $statistics = array();
     $statistics['users']['creation']['count'] = 0;
 
@@ -167,6 +168,12 @@ function petitions_stats_users_admin_form() {
     '#description' => t('Batch size for Petitions API requests. For example, a batch size of 100 and a total result count of 1000 would generate 10 requests for 100 items.'),
     '#default_value' => variable_get('psu_batch_size', 100),
   );
+  $form['psu_max_cron_tasks'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum queue tasks per cron'),
+    '#description' => t('The maximum number of tasks that may be queue via the Queue API in a given cron run.'),
+    '#default_value' => variable_get('psu_max_cron_tasks', 100000),
+  );
 
   return system_settings_form($form);
 }
@@ -184,5 +191,8 @@ function petitions_stats_users_admin_form_validate($form, &$form_state) {
   }
   if (!ctype_digit($values['psu_batch_size']) || $values['psu_batch_size'] < 1) {
     form_set_error('psu_batch_size', t('Batch size must be a positive integer.'));
+  }
+  if (!ctype_digit($values['psu_max_cron_tasks']) || $values['psu_max_cron_tasks'] < 1) {
+    form_set_error('psu_max_cron_tasks', t('Maximum queue tasks per cron must be a positive integer.'));
   }
 }

@@ -101,35 +101,79 @@ function _petitions_stats_users_queue_tasks() {
   $request_url = variable_get('psu_request_url', 'http://petitions.whitehouse.gov/api/v1/users.json');
   $response = _petitions_stats_users_request_data($request_url, $params, TRUE);
   $count = isset($response->metadata->count) ? $response->metadata->count : 0;
-  // It's possible that our requested batch size exceeds the server's max limit.
-  // To be safe, we use the server's response limit as a control.
-  $limit = $response->metadata->limit;
 
-  // If there are rows to fetch, queue as batched tasks via Queue API.
-  // @see http://www.hashbangcode.com/blog/drupal-7-queues-api-579.html
+  // If there are results.
   if ($count) {
-    $reliable = TRUE;
-    $queue = DrupalQueue::get('petitions_stats_users_fetch_queue', $reliable);
-    $highwatermark = variable_get('petitions_stats_users_fetch_queue_highwatermark', 0);
     // The $highwatermark indicates the last request that was queued during a
-    // previeous cron. E.g, if we've made a request for offsets of 90, 100,
+    // previous cron. E.g, if we've made a request for offsets of 90, 100,
     // and 110 in the past, the highwatermark would be 110. Our new requests
     // would be for offsets between 110 and the new $count.
-    for ($i = $highwatermark; $i < $count; $i += $limit) {
-      $item = array(
-        'url' => $request_url,
-        'params' => array(
-          'offset' => $i,
-          'limit' => $limit,
-        ),
-      );
-      $queue->createItem($item);
-    }
+    $highwatermark = variable_get('psu_highwatermark', 0);
 
-    // Set new highwatermark. This prevents us from requesting the same data
-    // in the future.
-    variable_set('petitions_stats_users_fetch_queue_highwatermark', $count);
-    return TRUE;
+    // If there is new data to fetch.
+    if ($highwatermark < $count) {
+      // It's possible that our requested batch size exceeds the server's max
+      // batch size. To be safe, we use the server's response limit as a control.
+      if ($response->metadata->limit != $batch_size) {
+        $message = 'Default batch size of @default exceeds server limit. Using batch size of @server.';
+        $vars = array(
+          '@default' => $batch_size,
+          '@server' => $response->metadata->limit,
+        );
+        watchdog('petitions_stats_users', $message, $vars);
+        $batch_size = $response->metadata->limit;
+      }
+
+      // Fetch the queue object from Drupal's Queue API.
+      // Setting the queue to be reliable ensures that tasks are sequential.
+      $reliable = TRUE;
+      $queue = DrupalQueue::get('petitions_stats_users_fetch_queue', $reliable);
+      $queue->createQueue();
+
+      // We set a moximum number of tasks that may be queued during a given cron.
+      // Otherwise, we could queue millions of tasks, which would be bad.
+      $num_new_tasks = ceil(($count - $highwatermark) / $batch_size);
+      $num_existing_tasks = $queue->numberOfItems();
+      $max_cron_tasks = variable_get('psu_max_cron_tasks', 100000);
+
+      if ($num_new_tasks + $num_existing_tasks > $max_cron_tasks) {
+        $num_allowed_tasks = $max_cron_tasks - $num_existing_tasks;
+        $threshold = $highwatermark + ($num_allowed_tasks * $batch_size);
+      }
+      else {
+        $num_allowed_tasks = ceil($count / $batch_size);
+        $threshold = $count;
+      }
+
+      // Queue tasks via Queue API.
+      // @see http://www.hashbangcode.com/blog/drupal-7-queues-api-579.html
+      for ($i = $highwatermark; $i < $threshold; $i += $batch_size) {
+        $item = array(
+          'url' => $request_url,
+          'params' => array(
+            'offset' => $i,
+            'limit' => $batch_size,
+          ),
+        );
+        $queue->createItem($item);
+      }
+
+      // Set new highwatermark. This prevents us from queueing the same data in
+      // the future.
+      variable_set('psu_highwatermark', $threshold);
+      $message = '@existing_tasks tasks already queued. Queueing @new_tasks new tasks to fetch rows @from to @to in batches of @limit. @total_queued of @max_cron_tasks allowed tasks are now queued for processing.';
+      $vars = array(
+        '@from' => $highwatermark,
+        '@to' => $threshold,
+        '@limit' => $batch_size,
+        '@existing_tasks' => $num_existing_tasks,
+        '@new_tasks' => $num_allowed_tasks,
+        '@total_queued' => $num_allowed_tasks + $num_existing_tasks,
+        '@max_cron_tasks' => $max_cron_tasks,
+      );
+      watchdog('petitions_stats_users', $message, $vars);
+      return TRUE;
+    }
   }
   else {
     return FALSE;
@@ -228,6 +272,7 @@ function _petitions_stats_users_request_data($url, $params = array()) {
  *   Returns true only if every row in $results is successfully saved.
  */
 function _petitions_stats_users_save_data($results) {
+  module_load_include('inc', 'petitions_stats_users', 'petitions_stats_users.files');
   $data_dir = variable_get('psu_data_dir', 'petitions_stats_users_data');
   $data = array();
 
@@ -255,11 +300,17 @@ function _petitions_stats_users_save_data($results) {
       if (lock_acquire($directory)) {
         $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
         lock_release($directory);
+        if (!$saved) {
+          return FALSE;
+        }
       }
       // Wait 30s and try again.
       elseif (lock_wait($directory)) {
         $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
         lock_release($directory);
+        if (!$saved) {
+          return FALSE;
+        }
       }
       // Fail.
       else {
@@ -279,258 +330,6 @@ function _petitions_stats_users_save_data($results) {
 }
 
 /**
- * Writes data to disk as JSON by creating new file or appending to existing.
- *
- * @param string $directory
- *   The directory to which the data file will be saved.
- * @param string $filename
- *   The filename (with extension) to be save.
- * @param array $data
- *   The data array of contents to be saved to disk.
- *
- * @return boolean
- *   Returns true if data was successfully written to disk.
- */
-function _petitions_stats_users_write_data($directory, $filename, $data) {
-  $file_uri = $directory . '/' . $filename;
-
-  // Ensure that destination directory exists.
-  if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-    // If the file exists.
-    if (file_exists($file_uri)) {
-      // Attempt to append new contents to existing data file. If the data file
-      // has reached its maximum size, a new, suffixed one will be created.
-      return _petitions_stats_users_write_data_append($directory, $filename, $data);
-    }
-    // Create a new file containing data.
-    else {
-      return _petitions_stats_users_write_data_create($directory, $filename, $data);
-    }
-  }
-  else {
-    $vars = array('@directory' => $directory);
-    $message = 'Unable to prepare directory @directory';
-    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
-    return FALSE;
-  }
-}
-
-/**
- * Writes a new data file to disk.
- *
- * This function may split data into multiple files to ensure that the maximum
- * permitted JSON array size is not exceeded.
- *
- * @param string $directory
- *   The directory to which the data file will be saved.
- * @param string $filename
- *   The filename (with extension) to be save.
- * @param array $data
- *   The data array of contents to be saved to disk.
- *
- * @return boolean
- *   Returns true if data was successfully written to disk.
- */
-function _petitions_stats_users_write_data_create($directory, $filename, $data) {
-  $file_uri = $directory . '/' . $filename;
-
-  // Ensure that data set does not exceed maximum array size.
-  $max_array_size = variable_get('psu_max_array_size', '10000');
-  $size = count($data);
-  if ($size > $max_array_size) {
-    // Split into two arrays: the first of acceptable size, the second
-    // containing overflow.
-    $first = array_slice($data, 0, $max_array_size - 1);
-    $second = array_slice($data, $max_array_size - 1, $size - 1);
-
-    // Save data by recursing. Note that the $second data will be written to a
-    // separate file following the naming pattern "/basename_[0-9]+/".
-    $success =  _petitions_stats_users_write_data_create($directory, $filename, $first) &&
-    _petitions_stats_users_write_data_create($directory, $filename, $second);
-  }
-  // Otherwise, save the file normally.
-  else {
-    $contents = json_encode($data);
-    $success = file_unmanaged_save_data($contents, $file_uri, FILE_EXISTS_RENAME);
-  }
-
-  // Log error on fail.
-  if (!$success) {
-    $vars = array('@file_uri' => $file_uri);
-    $message = 'Unable to create new file @file_uri. Note that Drupal must have write access to both the temporary and public/private file directories for this write to succeed.';
-    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
-  }
-
-  return $success;
-}
-
-/**
- * Appends data to an existing file.
- *
- * This function may split data into multiple files to ensure that the maximum
- * permitted JSON array size is not exceeded.
- *
- * @param string $directory
- *   The directory to which the data file will be saved.
- * @param string $filename
- *   The filename (with extension) to be save.
- * @param array $data
- *   The data array of contents to be saved to disk.
- *
- * @return boolean
- *   Returns true if data was successfully written to disk.
- */
-function _petitions_stats_users_write_data_append($directory, $filename, $data) {
-  $max_array_size = variable_get('psu_max_array_size', '10000');
-
-  // We know that the file at $file_uri exists. Let's check to see if files
-  // matching the pattern "/basename_[0-9]+/" also exist. If so, find the
-  // most recent URI.
-  $file_uri = _petitions_stats_users_most_recent_fileuri($directory, $filename);
-
-  // Load contents of existing file.
-  $existing_file_contents = _petitions_stats_users_load_data_file($file_uri);
-
-  // If the size of the existing file already equals the maximum,
-  // create a new file rather than appending data.
-  $existing_data_size = count($existing_file_contents);
-  if ($existing_data_size >= $max_array_size) {
-    return _petitions_stats_users_write_data_create($directory, $filename, $data);
-  }
-
-  // We first need to encode the new contents as JSON so that it has the
-  // same form as the content in the existing file. This is necessary
-  // because json_encode() converts some arrays into objects,
-  // fundamentally changing the data structure.
-  $new_contents = json_encode($data);
-  $new_contents = json_decode($new_contents);
-  $new_contents_size = count($new_contents);
-
-  // Merge existing file content with new content.
-  $combined_contents = array_merge($existing_file_contents, $new_contents);
-  // Ensure that there are no duplicate rows.
-  $combined_contents = _petitions_stats_users_unique_json($combined_contents);
-  $combined_contents_size = count($combined_contents);
-
-  // If the new combined data exceeds the maximum allowed size, append only
-  // permissible data, and create a new file for overflow.
-  if ($combined_contents_size > $max_array_size) {
-    // Split into two arrays: the first of acceptable size, the second
-    // containing overflow.
-    $append_contents = array_slice($combined_contents, 0, $max_array_size - 1);
-    $overflow_contents = array_slice($combined_contents, $max_array_size - 1, $combined_contents_size - 1);
-
-    // JSON encode append contents.
-    $append_contents = json_encode($append_contents);
-
-    return file_unmanaged_save_data($append_contents, $file_uri, FILE_EXISTS_REPLACE) &&
-    _petitions_stats_users_write_data_create($directory, $filename, $overflow_contents);
-  }
-
-  // JSON encode new, merged data.
-  $combined_contents = json_encode($combined_contents);
-
-  // Overwrite existing file.
-  if (file_unmanaged_save_data($combined_contents, $file_uri, FILE_EXISTS_REPLACE)) {
-    return TRUE;
-  }
-  else {
-    $vars = array('@file_uri' => $file_uri);
-    $message = 'Unable to append new data to @file_uri';
-    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
-    return FALSE;
-  }
-}
-
-/**
- * Loads and parses JSON from a given data file.
- *
- * @param string $file_uri
- *   The full file path of the file to be loaded.
- *
- * @return string
- *   The file contents.
- */
-function _petitions_stats_users_load_data_file($file_uri) {
-  // Load contents of existing files.
-  $existing_file_contents = file_get_contents($file_uri);
-
-  // Ensure that existing file contents are UTF8 encoded.
-  $is_encoded = mb_detect_encoding($existing_file_contents, array('UTF-8'), TRUE);
-  if (!$is_encoded) {
-    $existing_file_contents = utf8_encode($existing_file_contents);
-  }
-  // JSON decode existing file contents.
-  $existing_file_contents = json_decode($existing_file_contents);
-
-  return $existing_file_contents;
-}
-
-/**
- * Finds most recent file matching pattern "/basename_[0-9]+/".
- *
- * @param string $directory
- *   The directory to which the data file will be saved.
- * @param string $filename
- *   The filename (with extension) to be save.
- *
- * @return string
- *   The full system path of the most recently saved data file.
- */
-function _petitions_stats_users_most_recent_fileuri($directory, $filename) {
-  // Get basename of file (filename without extension).
-  $pos = strrpos($filename, '.');
-  if ($pos !== FALSE) {
-    $basename = substr($basename, 0, $pos);
-    $ext = substr($basename, $pos);
-  }
-  else {
-    $basename = $filename;
-  }
-
-  $mask = '/' . $basename . '_[0-9]+$/';
-  if ($existing_files = file_scan_directory($directory, $mask)) {
-    // Find the maximum numerical suffix to determine most recent file.
-    $max = NULL;
-    foreach ($existing_files as $existing_file_uri => $existing_file) {
-      $pos = strrpos($existing_file->name, '_');
-      $suffix = substr($existing_file->name, $pos + 1);
-      if ($max < $suffix) {
-        $max = $suffix;
-        $file_uri = $existing_file_uri;
-      }
-    }
-  }
-  else {
-    $file_uri = $directory . '/' . $filename;
-  }
-
-  return $file_uri;
-}
-
-/**
- * Ensures that JSON array contains only unique objects.
- *
- * @param array $merged
- *   An array of objects.
- *
- * @see http://stackoverflow.com/questions/4507518/will-array-unique-work-also-with-array-of-objects#4507991
- *
- * @return array
- *   An array of unique objects.
- */
-function _petitions_stats_users_unique_json($merged) {
-  $final  = array();
-  foreach ($merged as $current) {
-    // As of PHP5, in_array() can be used on objects.
-    if (!in_array($current, $final)) {
-      $final[] = $current;
-    }
-  }
-  return $final;
-}
-
-/**
  * Wipes stored data from disk, resets variables.
  *
  * @return boolean
@@ -539,17 +338,20 @@ function _petitions_stats_users_unique_json($merged) {
 function _petitions_stats_users_wipe_data() {
   $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
   $path = file_build_uri($data_dir);
-  variable_del('petitions_stats_users_fetch_queue_highwatermark');
+  variable_del('psu_highwatermark');
+  $reliable = TRUE;
+  $queue = DrupalQueue::get('petitions_stats_users_fetch_queue', $reliable);
+  $queue->deleteQueue();
   $vars = array('@path' => $path);
 
   if (file_unmanaged_delete_recursive($path)) {
-    $message = 'Could not wipe Petitions Statistics Users data from @path';
-    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
+    $message = 'Wiped Petitions Statistics Users data from @path.';
+    watchdog('petitions_stats_users', $message, $vars);
     return TRUE;
   }
   else {
-    $message = 'Wiped Petitions Statistics Users data from @path.';
-    watchdog('petitions_stats_users', $message, $vars);
+    $message = 'Could not wipe Petitions Statistics Users data from @path';
+    watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
     return FALSE;
   }
 }
