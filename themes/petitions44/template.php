@@ -104,22 +104,40 @@
 /**
  * Preprocesses the wrapping HTML.
  *
- * @param array &$variables
+ * @param array $vars
  *   Template variables.
  */
 function petitions44_preprocess_html(&$vars) {
-  // Set facebook open graph image tag.
-  $options = array('absolute' => TRUE);
+  // Set insecure facebook open graph image tag. There is a corresponding
+  // .htaccess rule that allows this image to be accessed via http. It is
+  // necessary to provide an http alternative of this image, due to FB bug.
+  // @see https://developers.facebook.com/bugs/405588419493203
+  $options = array('absolute' => TRUE, 'https' => FALSE);
+  $path = url(drupal_get_path('theme', 'petitions44') . '/img/fb_share_we_the_people.png', $options);
+  $path = str_replace('https://', 'http://', $path);
   $meta_og_img = array(
     '#type' => 'html_tag',
     '#tag' => 'meta',
     '#attributes' => array(
       'property' => 'og:image',
-      'content' =>  url(drupal_get_path('theme', 'petitions44') . '/img/fb_share_we_the_people.png', $options),
-    )
+      'content' => $path,
+    ),
   );
-
   drupal_add_html_head($meta_og_img, 'meta_og_img');
+
+  // Set secure facebook open graph image tag.
+  $options = array('absolute' => TRUE, 'https' => TRUE);
+  $path = url(drupal_get_path('theme', 'petitions44') . '/img/fb_share_we_the_people.png', $options);
+  $meta_og_img_secure = array(
+    '#type' => 'html_tag',
+    '#tag' => 'meta',
+    '#attributes' => array(
+      'property' => 'og:image:secure_url',
+      'content' => $path,
+    ),
+  );
+  drupal_add_html_head($meta_og_img_secure, 'meta_og_img_secure');
+
 }
 
 /**
