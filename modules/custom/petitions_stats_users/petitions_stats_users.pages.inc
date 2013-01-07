@@ -24,59 +24,38 @@ function petitions_stats_users_page($date = NULL) {
     $date = date($format);
   }
 
+  // Grab date parts.
+  $date_obj = new DateTime($date);
+  $year = $date_obj->format('Y');
+  $month = $date_obj->format('m');
+  $day = $date_obj->format('d');
+
   // Build date selector form.
   $date_form = drupal_render(drupal_get_form('petitions_stats_users_date_form', $date, $format));
   $output .= $date_form;
 
-  $base_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
-  $date_directory = file_build_uri($base_dir . '/' . $date);
-  $statistics     = array();
+  // Load statistics.
+  if ($date_stats = _petitions_stats_users_load_db_statistics($year, $month, $day)) {
+    // Create date stub.
+    $statistics['users']['creation']['dates'][$date] = array(
+      'title' => $date,
+      'count' => 0,
+    );
 
-  // Check to be sure that this is a real directory.
-  if (file_exists($date_directory)) {
-    module_load_include('inc', 'petitions_stats_users', 'petitions_stats_users.files');
-    $statistics = array();
-    $statistics['users']['creation']['count'] = 0;
-
-    // Set mask to match all files and folders.
-    $mask = '/./';
-    if ($contents = array_keys(file_scan_directory($date_directory, $mask))) {
-      foreach ($contents as $file_uri) {
-        list($data_dir, $date, $hour, $filename) = explode('/', file_uri_target($file_uri));
-        $day = array_pop(explode('/', $date_directory));
-        $data = _petitions_stats_users_load_data_file($file_uri);
-
-        // If this date has not been populated, create stub.
-        if (!isset($statistics['users']['creation']['dates'])) {
-          $statistics['users']['creation']['dates'][$date] = array(
-            'title' => $date,
-            'count' => 0,
-          );
-        }
-
-        // If this hour has not been populated, create stub.
-        if (!isset($statistics['users']['creation']['dates'][$date]['hours'][$hour])) {
-          $statistics['users']['creation']['dates'][$date]['hours'][$hour] = array(
-            'title' => $hour,
-            'count' => 0,
-          );
-        }
-
-        // The user count for this particular data file.
-        $user_count = count($data);
-
-        // Increment totals for this hour and this day.
-        $statistics['users']['creation']['dates'][$day]['hours'][$hour]['count'] += $user_count;
-        $statistics['users']['creation']['dates'][$day]['count'] += $user_count;
-        $statistics['users']['creation']['count'] += $user_count;
-      }
+    foreach ($date_stats as $hour => $count) {
+      // Create hour strub.
+      $statistics['users']['creation']['dates'][$date]['hours'][$hour] = array(
+        'title' => $hour,
+        'count' => $count,
+      );
+      $statistics['users']['creation']['dates'][$date]['count'] += $count;
     }
 
     // Calculate percentages.
     foreach ($statistics['users']['creation']['dates'] as $date => $date_data) {
       ksort($statistics['users']['creation']['dates'][$date]['hours']);
       foreach ($date_data['hours'] as $hour => $hour_data) {
-        $percentage = ($hour_data['count'] / $date_data['count']) * 100;
+        $percentage = round(($hour_data['count'] / $date_data['count']) * 100, 2);
         $statistics['users']['creation']['dates'][$date]['hours'][$hour]['percentage'] = $percentage;
       }
     }
@@ -144,6 +123,7 @@ function petitions_stats_users_admin_form() {
   // it very difficult to incrementally increase or decrease the contents of
   // a data file efficiently. By controlling the array size of the JSON
   // contents, we have more granular control.
+  /*
   $form['psu_max_array_size'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum array size per data file'),
@@ -156,6 +136,7 @@ function petitions_stats_users_admin_form() {
     '#description' => t('This is the directory in which JSON files will be stored. Enter a directory name relative to the Drupal files directory. Do not include trailing slashes.'),
     '#default_value' => variable_get('psu_data_dir', 'petitions_stats_users_data'),
   );
+  */
   $form['psu_request_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Request URL'),
@@ -172,7 +153,7 @@ function petitions_stats_users_admin_form() {
     '#type' => 'textfield',
     '#title' => t('Maximum queue tasks per cron'),
     '#description' => t('The maximum number of tasks that may be queue via the Queue API in a given cron run.'),
-    '#default_value' => variable_get('psu_max_cron_tasks', 100000),
+    '#default_value' => variable_get('psu_max_cron_tasks', 5000),
   );
 
   return system_settings_form($form);
@@ -183,9 +164,11 @@ function petitions_stats_users_admin_form() {
  */
 function petitions_stats_users_admin_form_validate($form, &$form_state) {
   $values = $form_state['values'];
+  /*
   if (!ctype_digit($values['psu_max_array_size']) || $values['psu_max_array_size'] < 1) {
     form_set_error('psu_max_array_size', t('Max array size must be a positive integer.'));
   }
+  */
   if (!valid_url($values['psu_request_url'])) {
     form_set_error('psu_request_url', t('Please enter a valid URL.'));
   }

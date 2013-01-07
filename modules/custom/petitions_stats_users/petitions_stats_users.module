@@ -134,7 +134,7 @@ function _petitions_stats_users_queue_tasks() {
       // Otherwise, we could queue millions of tasks, which would be bad.
       $num_new_tasks = ceil(($count - $highwatermark) / $batch_size);
       $num_existing_tasks = $queue->numberOfItems();
-      $max_cron_tasks = variable_get('psu_max_cron_tasks', 100000);
+      $max_cron_tasks = variable_get('psu_max_cron_tasks', 5000);
 
       if ($num_new_tasks + $num_existing_tasks > $max_cron_tasks) {
         $num_allowed_tasks = $max_cron_tasks - $num_existing_tasks;
@@ -200,10 +200,123 @@ function _petitions_stats_users_fetch_data($data) {
     $results = $response->results;
 
     // Save data.
-    return _petitions_stats_users_save_data($results);
+    //return _petitions_stats_users_save_json_data($results);
+    return _petitions_stats_users_save_db_data($results);
   }
 
   return FALSE;
+}
+
+/**
+ * Saves users statistics data to database.
+ */
+function _petitions_stats_users_save_db_data($results) {
+  $values = array();
+
+  // Created formatted array of user statistics.
+  foreach ($results as $user) {
+    // Get date params.
+    $year = date('Y', $user->created);
+    $month = date('m', $user->created);
+    $day = date('d', $user->created);
+    $hour = date('H', $user->created);
+
+    // Save user data object in structured array.
+    if (!isset($data[$year][$month][$day][$hour])) {
+      // Initialize to 1.
+      $values[$year][$month][$day][$hour] = 1;
+    }
+    else {
+      // Increment by 1.
+      $values[$year][$month][$day][$hour] =+ 1;
+    }
+  }
+
+  // Write statistics to database.
+  foreach ($values as $year => $months) {
+    foreach ($months as $month => $days) {
+      foreach ($days as $day => $hours) {
+        foreach ($hours as $hour => $count) {
+          // Perform UPSERT query.
+          $success = db_merge('psu_stats')
+            // Keys determine uniqueness of row.
+            ->key(array(
+              'year' => $year,
+              'month' => $month,
+              'day' => $day,
+              'hour' => $hour,
+            ))
+            // New fields to insert.
+            ->fields(array(
+              'year' => $year,
+              'month' => $month,
+              'day' => $day,
+              'hour' => $hour,
+              'count' => $count,
+            ))
+            // Update expression.
+            ->expression('count', 'count + :inc', array(':inc' => 1))
+            ->execute();
+
+          // If db_merge() fails, fail the entire task.
+          if (!$success) {
+            $message = 'Failed to upsert users statistics data for @date. If this fail occured mid-batch, it may result in inaccurate statistics.';
+            $vars = array(
+              '@date' => $year . '-' . $month . '-' . $day . ' ' . $hour . ':00',
+            );
+            watchdog('petitions_stats_users', $message, $vars);
+
+            return FALSE;
+          }
+        }
+      }
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Loads users statistics data from database.
+ *
+ * @param int $year
+ *   Year in YYYY format.
+ *
+ * @param int $month
+ *   Month in MM format.
+ *
+ * @param int $day
+ *   Day in DD format.
+ *
+ * @param int $hour
+ *   Hour in HH format.
+ *
+ * @return
+ */
+function _petitions_stats_users_load_db_statistics($year = NULL, $month = NULL, $day = NULL, $hour = NULL) {
+  $query = db_select('psu_stats', 'ps')
+  ->fields('ps', array(
+    'hour',
+    'count'))
+  ->orderBy('hour');
+
+  // Include optional conditions.
+  if ($year) {
+    $query->condition('year', $year);
+  }
+  if ($month) {
+    $query->condition('month', $month);
+  }
+  if ($day) {
+    $query->condition('day', $day);
+  }
+  if ($hour) {
+    $query->condition('hour', $hour);
+  }
+
+  $result = $query->execute()->fetchAllKeyed(0, 1);
+
+  return $result;
 }
 
 /**
@@ -263,96 +376,40 @@ function _petitions_stats_users_request_data($url, $params = array()) {
 }
 
 /**
- * Saves request results.
- *
- * @param array $results
- *   A numerical array of results. Each row is a user object.
- *
- * @return boolean
- *   Returns true only if every row in $results is successfully saved.
- */
-function _petitions_stats_users_save_data($results) {
-  module_load_include('inc', 'petitions_stats_users', 'petitions_stats_users.files');
-  $data_dir = variable_get('psu_data_dir', 'petitions_stats_users_data');
-  $data = array();
-
-  // Created formatted array of user data.
-  foreach ($results as $user) {
-    // Get date params.
-    $date = date('Y-m-d', $user->created);
-    $hour = date('H', $user->created);
-
-    // Save user data object in structured array.
-    $data[$date][$hour][] = array(
-      'id' => $user->id,
-    );
-  }
-
-  // Write formatted data array to disk.
-  foreach ($data as $date => $hours) {
-    foreach ($hours as $hour => $rows) {
-      // Specify directory and filename.
-      $path = $data_dir . '/' . $date . '/' . $hour;
-      //$directory = file_build_uri($path);
-      $directory = drupal_realpath(file_default_scheme() . '://') . '/' . $path;
-      $filename = 'data.json';
-
-      // Attempt to write to directory.
-      if (lock_acquire($directory)) {
-        $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
-        lock_release($directory);
-        if (!$saved) {
-          return FALSE;
-        }
-      }
-      // Wait 30s and try again.
-      elseif (lock_wait($directory)) {
-        $saved = _petitions_stats_users_write_data($directory, $filename, $rows);
-        lock_release($directory);
-        if (!$saved) {
-          return FALSE;
-        }
-      }
-      // Fail.
-      else {
-        $vars = array(
-          '@filename' => $filename,
-          '@directory' => $directory,
-          '@data' => var_export($rows, TRUE),
-        );
-        $message = 'Unable to write @filename to @directory. The directory is locked.';
-        watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
-        return FALSE;
-      }
-    }
-  }
-
-  return TRUE;
-}
-
-/**
  * Wipes stored data from disk, resets variables.
  *
  * @return boolean
  *   Returns true if all files were deleted.
  */
 function _petitions_stats_users_wipe_data() {
-  $data_dir = variable_get('petitions_stats_users_data_dir', 'petitions_stats_users_data');
-  $path = file_build_uri($data_dir);
+  // Remove variables.
   variable_del('psu_highwatermark');
+
+  // Remove existing items from queue.
   $reliable = TRUE;
   $queue = DrupalQueue::get('petitions_stats_users_fetch_queue', $reliable);
   $queue->deleteQueue();
-  $vars = array('@path' => $path);
 
-  if (file_unmanaged_delete_recursive($path)) {
-    $message = 'Wiped Petitions Statistics Users data from @path.';
+  // Wipe database data.
+  if (_petitions_stats_users_delete_db_data()) {
+    $message = 'Wiped Petitions Statistics Users data from database.';
     watchdog('petitions_stats_users', $message, $vars);
     return TRUE;
   }
   else {
-    $message = 'Could not wipe Petitions Statistics Users data from @path';
+    $message = 'Could not wipe Petitions Statistics Users data from database';
     watchdog('petitions_stats_users', $message, $vars, WATCHDOG_ERROR);
     return FALSE;
   }
+
+}
+
+/**
+ * Deletes users statistics data from database.
+ */
+function _petitions_stats_users_delete_db_data() {
+  $num_deleted = db_delete('psu_stats')
+    ->execute();
+
+  return $num_deleted;
 }
