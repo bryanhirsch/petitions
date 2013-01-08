@@ -20,6 +20,9 @@ projects[captcha][subdir] = contrib
 projects[coder][version] = 1.0-beta6
 projects[coder][subdir] = contrib
 
+projects[colorbox][version] = 2.0
+projects[colorbox][subdir] = contrib
+
 projects[conditional_styles][version] = 2.1
 projects[conditional_styles][subdir] = contrib
 
@@ -73,6 +76,9 @@ projects[imce][subdir] = contrib
 
 projects[job_scheduler][version] = 2.0-alpha3
 projects[job_scheduler][subdir] = contrib
+
+projects[libraries][version] = 2.0
+projects[libraries][subdir] = contrib
 
 projects[maintenance200][version] = 1.0
 projects[maintenance200][subdir] = contrib
