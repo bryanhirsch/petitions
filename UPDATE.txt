@@ -1,6 +1,20 @@
 UPDATE
 ======
 
+Version 7.x-1.0-alpha25 -> 7.x-1.0-alpha26
+-----------------------------------------------
+
+Update steps:
+
+  1. Clear Drupal Caches
+
+       drush cc all
+
+  2. Update Databases
+  
+       drush updb
+
+
 Version 7.x-1.0-alpha24 -> 7.x-1.0-alpha25
 -----------------------------------------------
 
