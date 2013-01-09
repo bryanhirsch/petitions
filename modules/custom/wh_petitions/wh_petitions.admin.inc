@@ -1339,7 +1339,7 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
   );
 
   batch_set($batch);
-  batch_process('admin/petitions/download_signatures/finish/' . $petition_id . '/' . $time_stamp);
+  batch_process('admin/petitions/download_signatures_finish/' . $petition_id . '/' . $time_stamp);
 }
 
 /**
@@ -1347,7 +1347,7 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
  */
 function wh_petitions_download_signatures($petition_id, $time_stamp) {
   $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
-  if ($_GET['download']) { 
+  if ($_GET['download']) {
     if ($handle = fopen($file_name, 'r')) {
       drupal_add_http_header('Content-Type', 'text/csv; utf-8');
       drupal_add_http_header('Content-Disposition', 'attachment; filename="' . $file_name . '"');
@@ -1420,8 +1420,7 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
         break;
       default:
         fwrite($file_handle, $record['mail'] . ', ' . $record['field_zip_value'] . PHP_EOL);
-        break;
-      
+        break;  
     }
     
   }

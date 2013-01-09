@@ -175,7 +175,7 @@ function wh_petitions_menu() {
   );
 
 // Admin - Petition Dashboard
-  $items['admin/petitions/download_signatures/finish/%/%'] = array(
+  $items['admin/petitions/download_signatures_finish/%/%'] = array(
     'title' => 'Download Signatures',
     'description' => 'Download petition signatures.',
     'page callback' => 'wh_petitions_download_signatures',
