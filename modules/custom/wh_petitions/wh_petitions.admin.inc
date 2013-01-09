@@ -1405,12 +1405,14 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
   }
  
   $mysql_query = db_select('users', 'u');
+  $mysql_query->join('field_data_field_zip', 'fz', 'u.uid = fz.entity_id');
   $mysql_query->fields('u', array('mail'));
-  $mysql_query->condition('uid', array($id_list), 'IN');
+  $mysql_query->fields('fz', array('field_zip_value'));
+  $mysql_query->condition('u.uid', array($id_list), 'IN');
   $result = $mysql_query->execute();
 
-  while ($email = $result->fetchField(0)) {
-    fwrite($file_handle, $email . PHP_EOL);
+  while ($record = $result->fetchAssoc()) {
+    fwrite($file_handle, $record['mail'] . ', ' . $record['field_zip_value'] . PHP_EOL);
   }
 
   $context['results']['filename'] = $context['sandbox']['output_file'];
