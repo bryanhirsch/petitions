@@ -85,6 +85,12 @@ function petitions_stats_users_page($date = NULL) {
  */
 function petitions_stats_users_date_form($form, $form_state, $date, $format) {
   module_load_include('inc', 'date', 'date_api_elements');
+
+  // Set starting year.
+  $psu_start_year = variable_get('psu_start_year', date(Y) - 3);
+  $start_year = date(Y) - $psu_start_year;
+  $date_year_range = '-' . $start_year . ':+0';
+
   $form = array();
 
   // See other available attributes and what they do in date_api_elements.inc
@@ -93,7 +99,7 @@ function petitions_stats_users_date_form($form, $form_state, $date, $format) {
     '#type' => 'date_select',
     '#default_value' => $date,
     '#date_format' => $format,
-    '#date_year_range' => '-3:+3',
+    '#date_year_range' => $date_year_range,
   );
 
   $form['submit'] = array(
@@ -116,6 +122,11 @@ function petitions_stats_users_date_form_submit($form, &$form_state) {
  * Page callback for administrative page.
  */
 function petitions_stats_users_admin_form() {
+
+  // Set default year.
+  $year = date(Y);
+  $default_year = $year - 3;
+
   $form = array();
 
   // This module was initially built to control file size directly. E.g., by
@@ -154,6 +165,15 @@ function petitions_stats_users_admin_form() {
     '#title' => t('Maximum queue tasks per cron'),
     '#description' => t('The maximum number of tasks that may be queue via the Queue API in a given cron run.'),
     '#default_value' => variable_get('psu_max_cron_tasks', 5000),
+  );
+
+  $form['psu_start_year'] = array(
+    '#type' => 'date_select',
+    '#title' => t('Starting year'),
+    '#description' => t('The first year to provide statistics for.'),
+    '#default_value' => variable_get('psu_start_year', $default_year),
+    '#date_format' => 'Y',
+    '#date_year_range' => '-10:+0',
   );
 
   return system_settings_form($form);
