@@ -1384,7 +1384,7 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
   $signatures_collection = wh_petitions_mongo_petition_signatures_connection();
  
   $query = array('petition_id' => $petition_id);
-  $fields = array('uid');
+  $fields = array('uid', 'timestamp');
 
   //get us a file to which to write output
   if(!$file_handle = fopen($file_name, 'a')) {
@@ -1400,14 +1400,24 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
 
   $mongo_signatures = $signatures_collection->find($query, $fields)->skip($context['sandbox']['progress'])->limit($limit);
   $id_list = array();
+  $timestamps = array();
   foreach ($mongo_signatures as $signature) {
     $context['sandbox']['progress']++;
     $id_list[] = $signature['uid'];
+    $timestamps[$signature['uid']] = $signature['timestamp'];
   }
  
   $mysql_query = db_select('users', 'u');
+  $mysql_query->join('field_data_field_first_name', 'fn', 'u.uid = fn.entity_id');
+  $mysql_query->join('field_data_field_last_name', 'ln', 'u.uid = ln.entity_id');
+  $mysql_query->join('field_data_field_city', 'fc', 'u.uid = fc.entity_id');
+  $mysql_query->join('field_data_field_state', 'fs', 'u.uid = fs.entity_id');
   $mysql_query->join('field_data_field_zip', 'fz', 'u.uid = fz.entity_id');
-  $mysql_query->fields('u', array('mail'));
+  $mysql_query->fields('u', array('uid', 'mail'));
+  $mysql_query->fields('fn', array('field_first_name_value'));
+  $mysql_query->fields('ln', array('field_last_name_value'));
+  $mysql_query->fields('fc', array('field_city_value'));
+  $mysql_query->fields('fs', array('field_state_value'));
   $mysql_query->fields('fz', array('field_zip_value'));
   $mysql_query->condition('u.uid', array($id_list), 'IN');
   $result = $mysql_query->execute();
@@ -1419,7 +1429,17 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
         fwrite($file_handle, $record['mail'] . PHP_EOL);
         break;
       default:
-        fwrite($file_handle, $record['mail'] . ', ' . $record['field_zip_value'] . PHP_EOL);
+        $row = array(
+          'uid' => $record['uid'],
+          'mail' => $record['mail'],
+          'firstname' => check_plain($record['field_first_name_value']),
+          'lastname' => check_plain($record['field_last_name_value']),
+          'city' => check_plain($record['field_city_value']),
+          'state' => check_plain($record['field_state_value']),
+          'zip' => $record['field_zip_value'],
+          'signature_timestamp' => $timestamps[$record['uid']]
+        );
+        fwrite($file_handle, implode(',', $row) . PHP_EOL);
         break;  
     }
     
