@@ -1432,10 +1432,10 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
         $row = array(
           'uid' => $record['uid'],
           'mail' => $record['mail'],
-          'firstname' => check_plain($record['field_first_name_value']),
-          'lastname' => check_plain($record['field_last_name_value']),
-          'city' => check_plain($record['field_city_value']),
-          'state' => check_plain($record['field_state_value']),
+          'firstname' => csv_sanitize($record['field_first_name_value']),
+          'lastname' => csv_sanitize($record['field_last_name_value']),
+          'city' => csv_sanitize($record['field_city_value']),
+          'state' => csv_sanitize($record['field_state_value']),
           'zip' => $record['field_zip_value'],
           'signature_timestamp' => $timestamps[$record['uid']]
         );
@@ -1449,4 +1449,10 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
   $context['results']['signatures'] = $context['sandbox']['progress'];
   $context['message'] = t('Processed !progress signatures', array('!progress' => $context['sandbox']['progress']));
   $context['finished'] = $context['sandbox']['progress']/$context['sandbox']['max'];
+}
+
+function csv_sanitize($data) {
+  $data = check_plain($data);
+  $data = str_replace(',', '&#44;', $data);
+  return $data;
 }
