@@ -1327,7 +1327,8 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
   $limit = 500;
   $time_stamp = time();
   
-  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  //$file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '../../files-private/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  $file_name = variable_get('file_' . file_default_scheme() . '_path', conf_path() . '/files').'/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
   
   $batch = array(
     'title' => t('Exporting Petition Signatures'),
@@ -1346,7 +1347,9 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
  * Redirection page for when Batch API completes.
  */
 function wh_petitions_download_signatures($petition_id, $time_stamp) {
-  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  //$file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '../../files-private/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  $file_name = variable_get('file_' . file_default_scheme() . '_path', conf_path() . '/files').'/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+ 
   if ($_GET['download']) {
     if ($handle = fopen($file_name, 'r')) {
       drupal_add_http_header('Content-Type', 'text/csv; utf-8');
@@ -1357,7 +1360,7 @@ function wh_petitions_download_signatures($petition_id, $time_stamp) {
       fclose($handle);
     }
     else {
-      return "I'm sorry, but something went wrong.  Welcome to Fail-ville, population: me :(<br />If you're so inclined, you could close this window and try again.";
+      return "I'm sorry, but something went wrong.  Welcome to Fail-ville, population: me :(<br />If you're so inclined, you could close this window and try again.<br />".htmlentities($filename);
     }
   }
   else {
@@ -1386,18 +1389,19 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
   $query = array('petition_id' => $petition_id);
   $fields = array('uid', 'timestamp');
 
-  //get us a file to which to write output
   if(!$file_handle = fopen($file_name, 'a')) {
     watchdog('wh_petitions', 'Unable to open file for writing subscriber export');
     return FALSE;
-  } 
+  }
   
   //setup initial sandbox
   if (empty($context['sandbox'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['max'] = $signatures_collection->count($query);
+    
   }
-
+  
+  // Run mongo query based on supplied petition_id.
   $mongo_signatures = $signatures_collection->find($query, $fields)->skip($context['sandbox']['progress'])->limit($limit);
   $id_list = array();
   $timestamps = array();
@@ -1442,9 +1446,8 @@ function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name
         fwrite($file_handle, implode(',', $row) . PHP_EOL);
         break;  
     }
-    
   }
-
+  
   $context['results']['filename'] = $context['sandbox']['output_file'];
   $context['results']['signatures'] = $context['sandbox']['progress'];
   $context['message'] = t('Processed !progress signatures', array('!progress' => $context['sandbox']['progress']));
