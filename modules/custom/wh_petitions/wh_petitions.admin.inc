@@ -1412,7 +1412,7 @@ function wh_petitions_download_signatures($petition_id, $time_stamp) {
       fclose($handle);
     }
     else {
-      return "I'm sorry, but something went wrong.  Welcome to Fail-ville, population: me :(<br />If you're so inclined, you could close this window and try again.<br />" . htmlentities($filename);
+      return "There was an error retrieving your file. Please contact the site administrator." . htmlentities($filename);
     }
   }
   else {
