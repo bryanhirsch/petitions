@@ -15,7 +15,7 @@ Update steps:
 
   1. Enable new modules.
 
-       drush en services rest_server services_documentation api_resource_users petitions_api -y
+       drush en services rest_server services_documentation api_resource_users petitions_stats_users petitions_api -y
 
 Version 7.x-1.0-alpha28 -> 7.x-1.0-alpha29
 -----------------------------------------------
