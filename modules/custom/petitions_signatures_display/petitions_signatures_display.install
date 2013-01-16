@@ -7,6 +7,6 @@
 /**
  * Implements hook_uninstall().
  */
-function petitions_homepage_uninstall() {
-  variable_del('petitions_profanity_filters_initials');
+function petitions_signatures_display_uninstall() {
+  variable_del('petitions_signatures_display_initials');
 }

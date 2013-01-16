@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * This is the main module file for Petitions Signatures Display.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function petitions_signatures_display_menu() {
+  $items = array();
+
+  $items['admin/config/petitions/signatures'] = array(
+    'title' => 'Signatures Display',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('petitions_signatures_display_configure'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'petitions_signatures_display.admin.inc',
+    'description' => "Configure signatures display.",
+  );
+
+  return $items;
+}
