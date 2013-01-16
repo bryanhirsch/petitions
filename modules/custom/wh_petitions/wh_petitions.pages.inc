@@ -813,32 +813,10 @@ function wh_petitions_get_signatures($petition_id, $petition_uid, $page, &$has_m
     $signatures[$i]['comment'] = check_plain($signatures[$i]['comment']);
     $signatures[$i]['number'] = wh_petitions_format_number($signatures[$i]['number']);
 
-    $name = '';
-    if (!empty($signatures[$i]['user']['first_name'])) {
-      $initials_only = variable_get('petitions_signatures_display_initials', 0);
-      if ($initials_only) {
-        $first_name = trim($signatures[$i]['user']['first_name']);
-        $first_initial = mb_substr($first_name, 0, 1);
-        $name = $first_initial;
-      }
-      else {
-        $name = $signatures[$i]['user']['first_name'];
-      }
-
-    }
-    if (!empty($signatures[$i]['user']['last_name'])) {
-      $last_name = trim($signatures[$i]['user']['last_name']);
-      $last_initial = mb_substr($last_name, 0, 1);
-      if (!empty($name)) {
-        $name .= ' ' . $last_initial;
-      }
-      else {
-        $name = $last_initial;
-      }
-    }
-    if (empty($name)) {
-      $name = $signatures[$i]['user']['username'];
-    }
+    $username = $signatures[$i]['user']['username'];
+    $first_name = $signatures[$i]['user']['first_name'];
+    $last_name = $signatures[$i]['user']['last_name'];
+    $name = petitions_signatures_display_style($username, $first_name, $last_name);
 
     $location = '';
     if (!empty($signatures[$i]['user']['city'])) {

@@ -22,3 +22,59 @@ function petitions_signatures_display_menu() {
 
   return $items;
 }
+
+/**
+ * Returns [first name] [last initial].
+ */
+function petitions_signatures_display_fname_linitial($first_name = '', $last_name = '') {
+  if ($first_name) {
+    $name = $first_name;
+  }
+
+  if ($last_name) {
+    if ($name) {
+      $name .= ' ' . mb_substr(trim($last_name), 0, 1);
+    }
+    else {
+      $name = mb_substr(trim($last_name), 0, 1);
+    }
+  }
+
+  return $name;
+}
+
+/**
+ * Returns [first initial] [last initial].
+ */
+function petitions_signatures_display_finitial_linitial($first_name = '', $last_name = '') {
+  if ($first_name) {
+    $name = mb_substr(trim($first_name), 0, 1);
+  }
+
+  if ($last_name) {
+    if ($name) {
+      $name .= ' ' . mb_substr(trim($last_name), 0, 1);
+    }
+    else {
+      $name = mb_substr(trim($last_name), 0, 1);
+    }
+  }
+
+  return $name;
+}
+
+/**
+ * Returns formatted name.
+ */
+function petitions_signatures_display_style($username, $first_name = '', $last_name = '') {
+  $function = variable_get('petitions_signatures_display_initials', 'petitions_signatures_display_fname_linitial');
+
+  if ($first_name || $last_name) {
+    $name = $function($first_name, $last_name);
+  }
+  else {
+    $name = $username;
+  }
+
+  return $name;
+}
