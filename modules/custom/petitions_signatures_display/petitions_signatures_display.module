@@ -78,3 +78,23 @@ function petitions_signatures_display_style($username, $first_name = '', $last_n
 
   return $name;
 }
+
+/**
+ * Returns city and state.
+ * Invokes _perform_lookup() in wh_zipcodelookup.module.
+ */
+function petitions_signatures_display_location($zipcode = '') {
+$city_state = _perform_lookup($zipcode);
+$city = $city_state[0][city];
+$state = $city_state[0][state];
+if ($city && $state) {
+  $location = $city . ', ' . $state;
+}
+elseif ($city && !$state) {
+  $location = $city;
+}
+elseif (!$city && $state) {
+  $location = $state;
+}
+return $location;
+}

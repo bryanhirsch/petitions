@@ -818,19 +818,12 @@ function wh_petitions_get_signatures($petition_id, $petition_uid, $page, &$has_m
     $last_name = $signatures[$i]['user']['last_name'];
     $name = petitions_signatures_display_style($username, $first_name, $last_name);
 
-    $location = '';
-    if (!empty($signatures[$i]['user']['city'])) {
-      $location = $signatures[$i]['user']['city'];
+    $zipcode = $signatures[$i]['user']['zip'];
+    $location = petitions_signatures_display_location($zipcode);
+
+    if ($location) {
+      $signatures[$i]['location'] = check_plain($location);
     }
-    if (!empty($signatures[$i]['user']['state'])) {
-      if (!empty($name)) {
-        $location .= ', ' . $signatures[$i]['user']['state'];
-      }
-      else {
-        $location = $signatures[$i]['user']['state'];
-      }
-    }
-    $signatures[$i]['location'] = check_plain($location);
     $signatures[$i]['full_name'] = check_plain($name);
   }
 
