@@ -6,6 +6,19 @@ Version 7.x-1.0-alpha29 -> 7.x-1.0-alpha30
 
 Release notes:
 
+  - Add custom Petitions Signatures Display module
+
+Update steps:
+
+  1. Enable new modules.
+
+       drush en petitions_signatures_display -y
+
+Version 7.x-1.0-alpha29 -> 7.x-1.0-alpha30
+-----------------------------------------------
+
+Release notes:
+
   - Add Services module
   - Add custom Services Documentation, Users Resource, and Petitions
     Statistics - Users modules
