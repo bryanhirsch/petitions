@@ -28,15 +28,15 @@ function petitions_signatures_display_menu() {
  */
 function petitions_signatures_display_fname_linitial($first_name = '', $last_name = '') {
   if ($first_name) {
-    $name = $first_name;
+    $name = ucfirst($first_name);
   }
 
   if ($last_name) {
     if ($name) {
-      $name .= ' ' . mb_substr(trim($last_name), 0, 1);
+      $name .= ' ' . ucfirst(mb_substr(trim($last_name), 0, 1)) . '.';
     }
     else {
-      $name = mb_substr(trim($last_name), 0, 1);
+      $name = ucfirst(mb_substr(trim($last_name), 0, 1)) . '.';
     }
   }
 
@@ -48,15 +48,15 @@ function petitions_signatures_display_fname_linitial($first_name = '', $last_nam
  */
 function petitions_signatures_display_finitial_linitial($first_name = '', $last_name = '') {
   if ($first_name) {
-    $name = mb_substr(trim($first_name), 0, 1);
+    $name = ucfirst(mb_substr(trim($first_name), 0, 1)) . '.';
   }
 
   if ($last_name) {
     if ($name) {
-      $name .= ' ' . mb_substr(trim($last_name), 0, 1);
+      $name .= ' ' . ucfirst(mb_substr(trim($last_name), 0, 1)) . '.';
     }
     else {
-      $name = mb_substr(trim($last_name), 0, 1);
+      $name = ucfirst(mb_substr(trim($last_name), 0, 1)) . '.';
     }
   }
 
