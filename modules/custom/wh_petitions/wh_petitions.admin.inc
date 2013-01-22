@@ -1378,7 +1378,7 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
   $limit = 500;
   $time_stamp = time();
 
-  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '../../files-private/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
 
   $batch = array(
     'title' => t('Exporting Petition Signatures'),
@@ -1400,7 +1400,7 @@ function wh_petitions_download_signatures_run_batch($petition_id, $report_type =
  * Redirection page for when Batch API completes.
  */
 function wh_petitions_download_signatures($petition_id, $time_stamp) {
-  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '../../files-private/signatures_list/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
+  $file_name = variable_get('file_temporary_path', '/mnt/tmp/petitions') . '/subscriber_export_' . $petition_id . '_' . $time_stamp . '.csv';
 
   if ($_GET['download']) {
     if ($handle = fopen($file_name, 'r')) {
