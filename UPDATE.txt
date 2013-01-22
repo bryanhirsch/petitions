@@ -11,16 +11,21 @@ Release notes:
   - Update user registration and user profile forms to disable user input for city/state/country
   - Add options to define the display of fields on the user registration and user profile forms
   - Add options to define the display of fields on the user profile page
+  - Update Colorbox contrib module
 
 Update steps:
 
-  1. Update databases.
+  1. Run the update script.
 
-       drush updb
+       drush updb -y
 
   2. Enable new modules.
 
        drush en petitions_profanity is_profane -y
+
+  3. Flush caches.
+
+       drush cc all
 
 Version 7.x-1.0-alpha30 -> 7.x-1.0-alpha31
 -----------------------------------------------
