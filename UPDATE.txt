@@ -12,6 +12,8 @@ Release notes:
   - Add options to define the display of fields on the user registration and user profile forms
   - Add options to define the display of fields on the user profile page
   - Update Colorbox contrib module
+  - Important: When updating to this version of the Colorbox module you need to
+    update the Colorbox plugin to v1.3.21.1 or later as well.
 
 Update steps:
 
