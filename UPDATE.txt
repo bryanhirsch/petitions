@@ -7,6 +7,7 @@ Version 7.x-1.0-alpha31 -> 7.x-1.0-alpha32
 Release notes:
 
   - Add custom Petitions Profanity and Is Profane modules
+  - Update user registration form to disable user input for city/state
 
 Update steps:
 
