@@ -15,9 +15,9 @@ function petitions_signatures_display_configure() {
   );
 
   $account_location = array(
-    'petitions_signatures_display_city_state' =>  t('Display editable city and state fields'),
-    'petitions_signatures_display_city_state_disabled' =>  t('Display uneditable city and state fields'),
-    'petitions_signatures_display_city_state_hidden' =>  t('Hide city and state fields'),
+    'petitions_signatures_display_city_state' => t('Display editable city and state fields'),
+    'petitions_signatures_display_city_state_disabled' => t('Display uneditable city and state fields'),
+    'petitions_signatures_display_city_state_hidden' => t('Hide city and state fields'),
   );
 
   $form['petitions_signatures_display_initials'] = array(
