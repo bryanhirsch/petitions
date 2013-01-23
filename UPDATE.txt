@@ -8,10 +8,16 @@ Release notes:
 
   - Add custom Petitions Profanity and Is Profane modules
   - Update user registration form to disable user input for city/state
+  - Update user registration and user profile forms to disable user input for city/state/country
+  - Add options to define the display of fields on the user registration and user profile forms
 
 Update steps:
 
-  1. Enable new modules.
+  1. Update databases.
+
+       drush updb
+
+  2. Enable new modules.
 
        drush en petitions_profanity is_profane -y
 
