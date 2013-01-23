@@ -116,3 +116,47 @@ function petitions_signatures_display_location_formatted($zipcode = '') {
     return;
   }
 }
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function petitions_signatures_display_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'user_register_form' || $form_id == 'user_profile_form') {
+    // Disable city and state fields.
+    $form['profile_main']['field_city']['#disabled'] = TRUE;
+    $form['profile_main']['field_state']['#disabled'] = TRUE;
+    // Attach wh_zipcodelookup.js.
+    if (module_exists('wh_zipcodelookup')) {
+      $form['#attached']['js'][] = drupal_get_path('module', 'wh_zipcodelookup') . '/wh_zipcodelookup.js';
+    }
+    // Add form validation
+    $form['#validate'][] = 'petitions_signatures_display_location_validate';
+  }
+}
+
+/**
+ * Form validation callback.
+ */
+function petitions_signatures_display_location_validate($form, &$form_state) {
+  $zipcode = $form_state['values']['profile_main']['field_zip'][LANGUAGE_NONE][0]['value'];
+  $location = petitions_signatures_display_location($zipcode);
+  $city = $location[0][city];
+  $state = $location[0][state];
+  if ($location[0][country] == 'us') {
+    $country = 'United States';
+  }
+  else {
+    $country = $form_state['values']['profile_main']['field_country'][LANGUAGE_NONE][0]['value'];
+  }
+
+  $values = array(
+    'field_city' => $city,
+    'field_state' => $state,
+    'field_country' => $country,
+    );
+
+  foreach ($values as $key => $value) {
+    form_set_value($form['profile_main'][$key], array(LANGUAGE_NONE => array(0 => array('value' => $value))), $form_state);
+  }
+}
