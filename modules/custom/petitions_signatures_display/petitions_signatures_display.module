@@ -80,24 +80,38 @@ function petitions_signatures_display_style($username, $first_name = '', $last_n
 }
 
 /**
- * Returns city and state.
+ * Returns an array including city, state, and abbreviated country.
  * Invokes _perform_lookup() in wh_zipcodelookup.module.
  */
 function petitions_signatures_display_location($zipcode = '') {
   if (module_exists('wh_zipcodelookup') && function_exists('_perform_lookup')) {
-    $city_state = _perform_lookup($zipcode);
-    $city = $city_state[0][city];
-    $state = $city_state[0][state];
+    $location = _perform_lookup($zipcode);
+    return $location;
+  }
+  else {
+    return;
+  }
+}
+
+/**
+ * Returns city and state formatted for display.
+ * Invokes _perform_lookup() in wh_zipcodelookup.module.
+ */
+function petitions_signatures_display_location_formatted($zipcode = '') {
+  if (module_exists('wh_zipcodelookup') && function_exists('_perform_lookup')) {
+    $location = petitions_signatures_display_location($zipcode);
+    $city = $location[0][city];
+    $state = $location[0][state];
     if ($city && $state) {
-      $location = $city . ', ' . $state;
+      $formatted_location = $city . ', ' . $state;
     }
     elseif ($city && !$state) {
-      $location = $city;
+      $formatted_location = $city;
     }
     elseif (!$city && $state) {
-      $location = $state;
+      $formatted_location = $state;
     }
-    return $location;
+    return $formatted_location;
   } else {
     return;
   }

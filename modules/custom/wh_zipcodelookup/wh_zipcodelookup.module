@@ -56,11 +56,11 @@ function _zip_code_lookup($zip, $form) {
  *   A multidimensional array of city,state pairs matching the zip code
  */
 function _perform_lookup($zip) {
-  $query = "SELECT city, state from {wh_zipcodes} where zip = :zip";
+  $query = "SELECT city, state, country from {wh_zipcodes} where zip = :zip";
   $results = db_query($query, array(':zip' => $zip));
   $pairs = array();
   while ($result = $results->fetch()) {
-    $pairs[] = array('city' => check_plain($result->city), 'state' => check_plain($result->state));
+    $pairs[] = array('city' => check_plain($result->city), 'state' => check_plain($result->state),  'country' => check_plain($result->country));
   }
   return $pairs;
 }
