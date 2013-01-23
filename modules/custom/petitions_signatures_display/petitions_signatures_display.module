@@ -117,21 +117,52 @@ function petitions_signatures_display_location_formatted($zipcode = '') {
   }
 }
 
+/**
+ * Default location fields display.
+ */
+function petitions_signatures_display_city_state(&$form) {
+  // Attach wh_zipcodelookup.js.
+  if (module_exists('wh_zipcodelookup')) {
+      $form['#attached']['js'][] = drupal_get_path('module', 'wh_zipcodelookup') . '/wh_zipcodelookup.js';
+  }
+  return $form;
+}
+
+/**
+ * Display disabled location fields.
+ */
+function petitions_signatures_display_city_state_disabled(&$form) {
+  // Disable city and state fields.
+  $form['profile_main']['field_city']['#disabled'] = TRUE;
+  $form['profile_main']['field_state']['#disabled'] = TRUE;
+  // Attach wh_zipcodelookup.js.
+  if (module_exists('wh_zipcodelookup')) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'wh_zipcodelookup') . '/wh_zipcodelookup.js';
+  }
+  // Add form validation
+  $form['#validate'][] = 'petitions_signatures_display_location_validate';
+  return $form;
+}
+
+/**
+ * Hide location fields from display.
+ */
+function petitions_signatures_display_city_state_hidden(&$form) {
+  // Hide city and state fields.
+  $form['profile_main']['field_city']['#type'] = 'hidden';
+  $form['profile_main']['field_state']['#type'] = 'hidden';
+  // Add form validation
+  $form['#validate'][] = 'petitions_signatures_display_location_validate';
+  return $form;
+}
 
 /**
  * Implements hook_form_alter().
  */
 function petitions_signatures_display_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'user_register_form' || $form_id == 'user_profile_form') {
-    // Disable city and state fields.
-    $form['profile_main']['field_city']['#disabled'] = TRUE;
-    $form['profile_main']['field_state']['#disabled'] = TRUE;
-    // Attach wh_zipcodelookup.js.
-    if (module_exists('wh_zipcodelookup')) {
-      $form['#attached']['js'][] = drupal_get_path('module', 'wh_zipcodelookup') . '/wh_zipcodelookup.js';
-    }
-    // Add form validation
-    $form['#validate'][] = 'petitions_signatures_display_location_validate';
+    $function = variable_get('petitions_signatures_display_account_location', 'petitions_signatures_display_city_state');
+    $form += $function($form);
   }
 }
 
