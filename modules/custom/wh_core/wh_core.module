@@ -80,6 +80,9 @@ function wh_core_form_alter(&$form, &$form_state, $form_id) {
     // Hide the origin field for new user redirecting.
     $form['field_origin']['und'][0]['value']['#type'] = 'hidden';
     $form['field_origin']['und'][0]['value']['#default_value'] = 'petitions';
+
+    // Hide the country field.
+    $form['profile_main']['field_country']['#type'] = 'hidden';
   }
 
   if ($form_id == 'user_register_form' && arg(0) != 'admin') {
@@ -93,9 +96,6 @@ function wh_core_form_alter(&$form, &$form_state, $form_id) {
     $form['account']['name']['#title'] = t('E-mail');
     $form['account']['name']['#access'] = FALSE;
     array_unshift($form['#validate'], 'wh_core_user_register_validate');
-
-    // Hide the country field.
-    $form['profile_main']['field_country']['#type'] = 'hidden';
 
     // Add the email registration field.
     $form['email_updates'] = array(
