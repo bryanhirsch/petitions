@@ -2,7 +2,7 @@
 
 /**
  * @file
- * City city, state, and country associated to a zipcode.
+ * Lookup city, state, and country associated to a zipcode.
  */
 
 /**
