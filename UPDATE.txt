@@ -10,6 +10,7 @@ Release notes:
   - Update user registration form to disable user input for city/state
   - Update user registration and user profile forms to disable user input for city/state/country
   - Add options to define the display of fields on the user registration and user profile forms
+  - Add options to define the display of fields on the user profile page
 
 Update steps:
 
