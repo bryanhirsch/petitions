@@ -194,3 +194,23 @@ function petitions_signatures_display_location_validate($form, &$form_state) {
     form_set_value($form['profile_main'][$key], array(LANGUAGE_NONE => array(0 => array('value' => $value))), $form_state);
   }
 }
+
+function petitions_signatures_display_profile2_view_alter(&$build, $type) {
+  $display = variable_get('petitions_signatures_display_profile_location', 'petitions_signatures_display_profile_user_city_state');
+  if ($display == 'petitions_signatures_display_profile_db_city_state') {
+    $zipcode = $build['field_zip']['#items'][0]['value'];
+    $location = petitions_signatures_display_location($zipcode);
+    $city = $location[0]['city'];
+    $state = $location[0]['state'];
+    if ($location[0]['country'] == 'us') {
+      $country = 'United States';
+    }
+    else {
+      $country = $build['field_country']['#items'][0]['value'];
+    }
+    $build['field_zip'][0]['#markup'] = $zipcode;
+    $build['field_city'][0]['#markup'] = $city;
+    $build['field_state'][0]['#markup'] = $state;
+    $build['field_country'][0]['#markup'] = $country;
+  }
+}
