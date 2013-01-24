@@ -211,6 +211,8 @@ function petitions_signatures_display_profile2_view_alter(&$build, $type) {
     $build['field_zip'][0]['#markup'] = $zipcode;
     $build['field_city'][0]['#markup'] = $city;
     $build['field_state'][0]['#markup'] = $state;
-    $build['field_country'][0]['#markup'] = $country;
+    if ($build['field_country']['#items'][0]['value']) {
+      $build['field_country'][0]['#markup'] = $country;
+    }
   }
 }
