@@ -1,6 +1,19 @@
 UPDATE
 ======
 
+Version 7.x-1.0-alpha31 -> 7.x-1.0-alpha32
+-----------------------------------------------
+
+Release notes:
+
+  - Add custom Petitions Profanity and Is Profane modules
+
+Update steps:
+
+  1. Enable new modules.
+
+       drush en petitions_profanity is_profane -y
+
 Version 7.x-1.0-alpha30 -> 7.x-1.0-alpha31
 -----------------------------------------------
 
