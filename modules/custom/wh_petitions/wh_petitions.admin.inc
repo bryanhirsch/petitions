@@ -123,7 +123,7 @@ function wh_petitions_admin_petition_settings() {
     '#type' => 'textfield',
     '#title' => t('New Petition Email Address'),
     '#description' => t('Email Address to send new petitions notifications to.'),
-    '#default_value' => variable_get('wh_petitions_published_email_address', 'wethepeople@whitehouse.gov'),
+    '#default_value' => variable_get('wh_petitions_published_email_address', variable_get('site_mail', '')),
     '#required' => FALSE,
   );
   $form['emails']['wh_petitions_email_ready_response_subject'] = array(
@@ -447,7 +447,7 @@ You can read the response here: !shorturl'),
     '#type' => 'textarea',
     '#title' => t('Compliance Reviewer Email Addresses'),
     '#description' => t('Enter a comma-separated list of email addresses who should be notified when a petition passes the compliance review threshold.'),
-    '#default_value' => variable_get('wh_petitions_compliance_reviewer_emails', 'wethepeople@whitehouse.gov'),
+    '#default_value' => variable_get('wh_petitions_compliance_reviewer_emails', variable_get('site_mail', '')),
     '#required' => FALSE,
   );
   $form['petition_admin']['wh_petitions_review_threshold_passed_subject'] = array(
@@ -462,7 +462,7 @@ You can read the response here: !shorturl'),
     '#title' => t('Text for the email sent when a petition receives enough signatures to pass the compliance review threshold.'),
     '#description' => '',
     '#default_value' => variable_get('wh_petitions_review_threshold_passed_text', 'The petition titled "!petition_title" has passed the number of signatures necessary for compliance review.
- 
+
 You can review and, if necessary, remove this petition at the following URL: !petition_edit_link
     '),
     '#required' => TRUE,
