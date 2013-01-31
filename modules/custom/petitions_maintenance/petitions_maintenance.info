@@ -1,3 +1,10 @@
 name = Petitions Maintenance
 description = This module is used for Petitions application maintenance tasks
 core = 7.x
+
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

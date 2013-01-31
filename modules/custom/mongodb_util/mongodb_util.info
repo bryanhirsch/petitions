@@ -5,3 +5,10 @@ core = "7.x"
 version = "devel"
 
 dependencies[] = "mongodb"
+
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

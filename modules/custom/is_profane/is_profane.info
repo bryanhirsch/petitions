@@ -1,3 +1,10 @@
 name = Is Profane
 description = Provides functions that allow modules to validate against a list of defined profanity terms.
 core = 7.x
+
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

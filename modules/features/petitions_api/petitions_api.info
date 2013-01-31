@@ -9,3 +9,10 @@ dependencies[] = api_resource_users
 features[ctools][] = services:services:3
 features[features_api][] = api:1
 features[services_endpoint][] = api_v1
+
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

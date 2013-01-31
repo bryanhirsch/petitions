@@ -3,3 +3,9 @@ description = Management module for all petitions specific profanity changes.
 package = "Custom"
 core = "7.x"
 version = "7.x-1.2"
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

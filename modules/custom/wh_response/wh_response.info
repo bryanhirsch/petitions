@@ -6,3 +6,9 @@ version = "7.x-1.0"
 dependencies[] = "mongodb"
 dependencies[] = "taxonomy"
 dependencies[] = "wh_petitions"
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+

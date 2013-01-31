@@ -23,3 +23,10 @@ version = ""
 project = "petition"
 datestamp = "1346805183"
 
+
+
+; Information added by drush on 2013-01-30
+version = ""
+project = "petitions"
+datestamp = "1359587545"
+
