@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provides user for Services according to Whitehouse API Standards
+ * Provides petitions and signatures for Services according to Whitehouse API Standards
  */
 
 /**
@@ -21,7 +21,7 @@ function api_petitions_services_resources() {
             'optional' => FALSE,
             'source' => array('path' => 0),
             'type' => 'string',
-            'description' => 'The petition id of the petition to get',
+            'description' => 'The petition id of the petition to get.',
           ),
           array(
             'name' => 'mock',
@@ -99,8 +99,8 @@ function api_petitions_services_resources() {
             'name' => 'petition_id',
             'optional' => FALSE,
             'source' => array('path' => 0),
-            'type' => 'array',
-            'description' => 'The petition id of the petition whose signatures we are getting',
+            'type' => 'string',
+            'description' => 'The petition id of the petition whose signatures we are getting.',
           ),
           array(
             'name' => 'city',

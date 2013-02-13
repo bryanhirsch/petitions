@@ -22,10 +22,6 @@ Update steps:
 
        drush updb -y
 
-  2. Rebuild the registry.
-
-       drush rr
-
 Version 7.x-1.0-alpha31 -> 7.x-1.0-alpha32
 -----------------------------------------------
 

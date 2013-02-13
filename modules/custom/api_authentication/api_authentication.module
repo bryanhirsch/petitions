@@ -12,7 +12,7 @@ function api_authentication_services_authentication_info() {
   return array(
     'file'             => 'api_authentication.inc',
     'title'            => t('API authentication'),
-    'description'      => t('Key-based API authorization'),
+    'description'      => t('Key-based API authentication'),
     'authenticate_call' => '_api_authentication_authenticate_call',
   );
 }
