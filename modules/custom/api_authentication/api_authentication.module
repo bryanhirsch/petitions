@@ -2,7 +2,9 @@
 
 /**
  * @file
- * Provides authentication methods for the Petitions API
+ * api_authentication.module
+ *
+ * Provides authentication methods for the Petitions API.
  */
 
 /**

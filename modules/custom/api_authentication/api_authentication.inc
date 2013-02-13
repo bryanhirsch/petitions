@@ -2,6 +2,8 @@
 
 /**
  * @file
+ * api_authentication.inc
+ *
  * Include file for api_authentication module.
  */
 

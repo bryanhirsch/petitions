@@ -18,23 +18,23 @@ function petitions_api_default_services_endpoint() {
   $endpoint->path = 'api/v1';
   $endpoint->authentication = array();
   $endpoint->server_settings = array(
-  'formatters' => array(
-    'bencode' => TRUE,
-    'json' => TRUE,
-    'jsonp' => TRUE,
-    'php' => TRUE,
-    'rss' => TRUE,
-    'xml' => TRUE,
-  ),
-  'parsers' => array(
-    'application/json' => TRUE,
-    'application/vnd.php.serialized' => TRUE,
-    'application/xml' => TRUE,
-    'multipart/form-data' => TRUE,
-    'text/xml' => TRUE,
-    'application/x-www-form-urlencoded' => FALSE,
-  ),
-);
+    'formatters' => array(
+      'bencode' => TRUE,
+      'json' => TRUE,
+      'jsonp' => TRUE,
+      'php' => TRUE,
+      'rss' => TRUE,
+      'xml' => TRUE,
+    ),
+    'parsers' => array(
+      'application/json' => TRUE,
+      'application/vnd.php.serialized' => TRUE,
+      'application/xml' => TRUE,
+      'multipart/form-data' => TRUE,
+      'text/xml' => TRUE,
+      'application/x-www-form-urlencoded' => FALSE,
+    ),
+  );
   $endpoint->resources = array(
     'petitions' => array(
       'operations' => array(

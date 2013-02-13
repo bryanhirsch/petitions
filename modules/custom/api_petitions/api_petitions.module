@@ -2,7 +2,10 @@
 
 /**
  * @file
- * Provides petitions and signatures for Services according to Whitehouse API Standards
+ * api_petitions.module
+ *
+ * Provides petitions and signatures for Services according to Whitehouse API
+ * Standards.
  */
 
 /**
@@ -243,14 +246,14 @@ function _api_petitions_retrieve_doc() {
     '#description' => t('Returns a petition matching the petition id.'),
     '#request' => '/api/v1/petitions/petition_id.json',
     '#response' => _api_petitions_mock_response('retrieve'),
-    //'#example_implementations_bundles' => _api_petitions_retrieve_doc_example_implementations_bundles(),
+    // '#example_implementations_bundles' => _api_petitions_retrieve_doc_example_implementations_bundles(),
   );
 
   return $element;
 }
 
 /**
- * Documentation callback for bundles of examples implementing retrieve method of petitions resource.
+ * Documentation callback for bundled examples implementing retrieve method.
  */
 function _api_petitions_retrieve_doc_example_implementations_bundles() {
   $example_implementations_bundles = array(
@@ -264,7 +267,7 @@ function _api_petitions_retrieve_doc_example_implementations_bundles() {
 }
 
 /**
- * Documentation callback for examples implementing retrieve method of petitions resource.
+ * Documentation callback for examples implementing retrieve method.
  */
 function _api_petitions_retrieve_doc_example_implementations() {
   $example_implementations = array(
@@ -281,7 +284,7 @@ function _api_petitions_retrieve_doc_example_implementations() {
 }
 
 /**
- * Documentation callback for index method of petitions resource.
+ * Documentation callback for index method.
  */
 function _api_petitions_index_doc() {
   $element = array(
@@ -295,22 +298,22 @@ function _api_petitions_index_doc() {
 }
 
 /**
- * Documentation callback for relationship method of petitions resource.
+ * Documentation callback for relationship method.
  */
 function _api_petitions_load_signatures_doc() {
   $element = array(
-      '#name' => t('Signatures List'),
-      '#description' => t('Display signatures attached to a petition.'),
-      '#request' => '/api/v1/petitions/petition_id/signatures.json?limit=100&offset=0',
-      '#response' => _api_petitions_mock_response('load_signatures'),
-      //'#example_implementations_bundles' => _api_petitions_load_signatures_doc_example_implementations_bundles(),
+    '#name' => t('Signatures List'),
+    '#description' => t('Display signatures attached to a petition.'),
+    '#request' => '/api/v1/petitions/petition_id/signatures.json?limit=100&offset=0',
+    '#response' => _api_petitions_mock_response('load_signatures'),
+    // '#example_implementations_bundles' => _api_petitions_load_signatures_doc_example_implementations_bundles(),
   );
 
   return $element;
 }
 
 /**
- * Documentation callback for bundles of examples implementing relationship method of petitions resource.
+ * Documentation callback for bundled examples implementing relationship method.
  */
 function _api_petitions_load_signatures_doc_example_implementations_bundles() {
   $example_implementations_bundles = array(
@@ -324,7 +327,7 @@ function _api_petitions_load_signatures_doc_example_implementations_bundles() {
 }
 
 /**
- * Documentation callback for bundles of examples implementing relationship method of petitions resource.
+ * Documentation callback for examples implementing relationship method.
  */
 function _api_petitions_load_signatures_doc_example_implementations() {
   $example_implementations = array(
@@ -332,7 +335,7 @@ function _api_petitions_load_signatures_doc_example_implementations() {
       '#name' => t('Signatures List'),
       '#description' => t('Display a list of signatures associated with a petition.'),
       '#code' => _api_petitions_example_implementation('load_signatures', 'javascript', 'signatures_list'),
-      '#download_link' => url(drupal_get_path('module', 'api_petitions')) . '/example_implementations/javascript/signatures_list.zip', array('absolute' => TRUE),
+      '#download_link' => url(drupal_get_path('module', 'api_petitions') . '/example_implementations/javascript/signatures_list.zip', array('absolute' => TRUE)),
       '#uses_sdk' => FALSE,
     ),
   );
@@ -345,15 +348,18 @@ function _api_petitions_load_signatures_doc_example_implementations() {
  */
 function _api_petitions_mock_response($method) {
   switch ($method) {
-    case 'index' :
+    case 'index':
       $file = 'api_petitions_index.response.json';
       break;
-    case 'retrieve' :
+
+    case 'retrieve':
       $file = 'api_petitions_retrieve.response.json';
       break;
-    case 'load_signatures' :
+
+    case 'load_signatures':
       $file = 'api_petitions_load_signatures.response.json';
       break;
+
   }
   $response = file_get_contents(__DIR__ . '/example_responses/' . $file);
   return $response;
@@ -364,7 +370,7 @@ function _api_petitions_mock_response($method) {
  */
 function _api_petitions_example_implementation($method, $language, $example) {
   $directory = __DIR__ . '/example_implementations/' . $language . '/' . $example;
-  //$directory_contents = _api_petitions_directory_scan_recursively($directory);
+  // $directory_contents = _api_petitions_directory_scan_recursively($directory);
   return 'stub';
 }
 
