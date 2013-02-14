@@ -1,7 +1,7 @@
 UPDATE
 ======
 
-Version 7.x-1.0-alpha32 -> 7.x-1.0-alpha33
+Version 7.x-1.0 -> 7.x-2.0-beta1
 -----------------------------------------------
 
 Release notes:
