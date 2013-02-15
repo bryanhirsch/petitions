@@ -147,7 +147,7 @@ class PetitionLoadMongoRaw implements IPetitionLoadRaw {
       'url' => $this->formatReturnUrl($doc['nice_url']),
       'deadline' => $this->calcDeadline($doc['created'], $doc['review_timeframe']),
       'status' => $doc['petition_status'],
-      'response' => $doc['response_id'] ? $this->formatReturnResponse($doc['response_id']) : array(),
+      'response' => $doc['response_id'] ? $this->formatReturnResponse($doc['response_id']) : NULL,
       'created' => $doc['created'],
     );
 

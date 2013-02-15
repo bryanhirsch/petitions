@@ -356,7 +356,7 @@ class PetitionsMongoRaw implements IPetitionsRaw {
         'url' => $this->formatReturnUrl($doc['nice_url']),
         'deadline' => $this->calcDeadline($doc['created'], $doc['review_timeframe']),
         'status' => $this->formatReturnPetitionStatus($doc['petition_status']),
-        'response' => $this->formatReturnResponse($doc['response_id']),
+        'response' => $doc['response_id'] ? $this->formatReturnResponse($doc['response_id']) : NULL,
         'created' => $doc['created'],
       );
 
