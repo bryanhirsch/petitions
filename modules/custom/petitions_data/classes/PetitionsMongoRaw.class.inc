@@ -476,7 +476,7 @@ class PetitionsMongoRaw implements IPetitionsRaw {
    *   Signatures remaining to required to reach response threshold.
    */
   protected function calcSignaturesNeeded($total, $current) {
-    return ($current <= $total) ? 0 : $total - $current;
+    return ($current >= $total) ? 0 : $total - $current;
   }
 
   /**
