@@ -344,8 +344,8 @@ class SignaturesMongoRaw implements ISignaturesRaw {
    */
   public function load($petition_id) {
     $response = array();
-    $response['metadata'] = array();
-    $response['results'] = array('execution time' => '', 'resultset' => array());
+    $response['metadata'] = array('execution time' => '', 'resultset' => array());
+    $response['results'] = array();
 
     if ($this->getCreatedDate()) {
       $this->addCreatedDateToQuery();
