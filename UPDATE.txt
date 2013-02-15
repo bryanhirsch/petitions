@@ -20,6 +20,10 @@ Update steps:
 
        drush updb -y
 
+  2. Flush caches.
+
+       drush cc all
+
 Version 7.x-1.0-alpha31 -> 7.x-1.0-alpha32
 -----------------------------------------------
 
