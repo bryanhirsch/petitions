@@ -243,7 +243,6 @@ function _api_petitions_load_signatures($petition_id, $city, $state, $zipcode, $
     return $response;
   }
 
-  $response = array('test');
   $resource = SignaturesRawFactory::create();
   $resource->setZipCode($zipcode)
     ->setCountry($country)
