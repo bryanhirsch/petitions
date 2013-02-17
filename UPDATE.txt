@@ -1,6 +1,27 @@
 UPDATE
 ======
 
+Version 7.x-2.0-beta1 -> 7.x-2.0-beta2
+-----------------------------------------------
+
+Release notes:
+
+  - Update Petitions Data and Petitions Resource modules to return signature data and minor fixes
+
+Update steps:
+
+  0. Prior to deploying the updated profile, disable and uninstall api_resource_users (optional but suggested)
+
+       drush dis -y api_resource_users
+
+  1. Run the update script to enable new modules.
+
+       drush updb -y
+
+  2. Flush caches.
+
+       drush cc all
+
 Version 7.x-1.0 -> 7.x-2.0-beta1
 -----------------------------------------------
 
