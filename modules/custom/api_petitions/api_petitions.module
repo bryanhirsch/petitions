@@ -159,7 +159,7 @@ function api_petitions_services_resources() {
             'optional' => TRUE,
             'type' => 'int',
             'description' => 'The maximum number of results that may be returned. E.g., to return results 10-20, an offset of 10 and limit of 10 would be passed.',
-            'default value' => 10,
+            'default value' => 1000,
             'source' => array('param' => 'limit'),
           ),
           array(
