@@ -10,7 +10,6 @@ core = 7.x
 ; --------------------------------------
 projects[drupal][version] = 7.15
 projects[drupal][patch][] = http://drupal.org/files/drupal-menu-int-972536-83-D7.patch
-projects[services][patch][] = http://drupal.org/files/services-relationship-source-arg-path-1917432-3.patch
 
 ; Petitions installation profile
 ; -------------------------------
