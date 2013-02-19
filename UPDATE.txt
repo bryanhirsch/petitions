@@ -10,17 +10,7 @@ Release notes:
 
 Update steps:
 
-  0. Prior to deploying the updated profile, disable and uninstall api_resource_users (optional but suggested)
-
-       drush dis -y api_resource_users
-
-  1. Run the update script to enable new modules.
-
-       drush updb -y
-
-  2. Flush caches.
-
-       drush cc all
+  1. Deploy the latest code. No other steps are necessary.
 
 Version 7.x-1.0 -> 7.x-2.0-beta1
 -----------------------------------------------
