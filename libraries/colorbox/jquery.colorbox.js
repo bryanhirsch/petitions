@@ -1,5 +1,5 @@
 /*!
-	jQuery ColorBox v1.4.0 - 2013-02-12
+	jQuery ColorBox v1.4.3 - 2013-02-18
 	(c) 2013 Jack Moore - jacklmoore.com/colorbox
 	license: http://www.opensource.org/licenses/mit-license.php
 */
@@ -166,20 +166,20 @@
 	
 	// Checks an href to see if it is a photo.
 	// There is a force photo option (photo: true) for hrefs that cannot be matched by the regex.
-	function isImage(url) {
+	function isImage(settings, url) {
 		return settings.photo || settings.photoRegex.test(url);
 	}
 
-	function retinaUrl(url) {
+	function retinaUrl(settings, url) {
 		return settings.retinaUrl && window.devicePixelRatio > 1 ? url.replace(settings.photoRegex, settings.retinaSuffix) : url;
 	}
 
-    function trapFocus(e) {
-        if (!$.contains($box[0], e.target) && $box[0] !== e.target) {
-            e.stopPropagation();
-            $box.focus();
-        }
-    }
+	function trapFocus(e) {
+		if ('contains' in $box[0] && !$box[0].contains(e.target)) {
+			e.stopPropagation();
+			$box.focus();
+		}
+	}
 
 	// Assigns function results to their respective properties
 	function makeSettings() {
@@ -318,6 +318,12 @@
 				}
 			}
 			
+            $overlay.css({
+                opacity: parseFloat(settings.opacity),
+                cursor: settings.overlayClose ? "pointer" : "auto",
+                visibility: 'visible'
+            }).show();
+            
 			if (!open) {
 				open = active = true; // Prevents the page-change action from queuing up if the visitor holds down the left or right keys.
 				
@@ -332,11 +338,6 @@
 				loadedHeight = $loaded.outerHeight(true);
 				loadedWidth = $loaded.outerWidth(true);
 				
-				$overlay.css({
-					opacity: parseFloat(settings.opacity),
-					cursor: settings.overlayClose ? "pointer" : "auto",
-					visibility: 'visible'
-				}).show();
 				
 				// Opens inital empty ColorBox prior to content being loaded.
 				settings.w = setSize(settings.initialWidth, 'x');
@@ -472,7 +473,7 @@
 						e.preventDefault();
 						publicMethod.close();
 					}
-                    if (open && settings.arrowKey && $related[1]) {
+                    if (open && settings.arrowKey && $related[1] && !e.altKey) {
 						if (key === 37) {
 							e.preventDefault();
 							$prev.click();
@@ -758,7 +759,8 @@
 							src = $(i).attr('href');
 						}
 
-						if (src && (isImage(src) || data.photo)) {
+						if (src && isImage(data, src)) {
+							src = retinaUrl(data, src);
 							img = new Image();
 							img.src = src;
 						}
@@ -892,9 +894,9 @@
 			prep(" ");
 		} else if (settings.html) {
 			prep(settings.html);
-		} else if (isImage(href)) {
+		} else if (isImage(settings, href)) {
 
-			href = retinaUrl(href);
+			href = retinaUrl(settings, href);
 
 			$(photo = new Image())
 			.addClass(prefix + 'Photo')
