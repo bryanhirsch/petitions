@@ -16,5 +16,5 @@ projects[drupal][patch][] = http://drupal.org/files/services-relationship-source
 ; -------------------------------
 projects[petitions][type] = profile
 projects[petitions][download][type] = git
-projects[petitions][download][branch] = 7.x-1.x
-projects[petitions][download][revision] = 7.x-2.0-beta2
+projects[petitions][download][branch] = 7.x-2.x
+projects[petitions][download][revision] = 7.x-2.0-beta4

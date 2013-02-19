@@ -1,7 +1,7 @@
 UPDATE
 ======
 
-Version 7.x-2.0-beta1 -> 7.x-2.0-beta2
+Version 7.x-2.0-beta1 -> 7.x-2.0-beta4 (skipping beta2 and beta3)
 -----------------------------------------------
 
 Release notes:
