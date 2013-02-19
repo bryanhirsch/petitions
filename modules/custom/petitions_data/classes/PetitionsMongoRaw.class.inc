@@ -9,7 +9,8 @@ class PetitionsMongoRaw implements IPetitionsRaw {
   protected $startDate;
   protected $endDate;
   protected $createdDate;
-  protected $limit = 100;
+  protected $max_return_limit = 1000;
+  protected $limit;
   protected $offset;
   protected $query = array();
   protected $collection;
@@ -71,13 +72,13 @@ class PetitionsMongoRaw implements IPetitionsRaw {
    * @param int $limit
    *   Number of results to return
    *
-   * @return PetitionsMongoRaw
+   * @return SignaturesMongoRaw
    *   Returns current instance of object.
    */
   public function setLimit($limit) {
     if (is_numeric($limit)) {
-      if ($limit > 100) {
-        $limit = 100;
+      if ($limit > $this->max_return_limit) {
+        $limit = $this->max_return_limit;
       }
       $this->limit = $limit;
     }
@@ -211,6 +212,11 @@ class PetitionsMongoRaw implements IPetitionsRaw {
    *   Number of results to return
    */
   protected function getLimit() {
+    
+    if(!intval($this->limit)){
+      return $this->max_return_limit;
+    }
+    
     return intval($this->limit);
   }
 
