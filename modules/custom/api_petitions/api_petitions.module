@@ -293,7 +293,7 @@ function _api_petitions_retrieve_doc_example_implementations() {
     'thermometer' => array(
       '#name' => t('Thermometer'),
       '#description' => t('Display the status of a petition as a thermometer.'),
-      '#location' => _api_petitions_example_implementation('retrieve', 'javascript', 'thermometer'),
+      //'#location' => _api_petitions_example_implementation('retrieve', 'javascript', 'thermometer'),
       '#download_link' => drupal_get_path('module', 'api_petitions') . '/example_implementations/javascript/thermometer.zip',
       '#uses_sdk' => FALSE,
     ),
