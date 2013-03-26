@@ -165,8 +165,8 @@ projects[nagios][patch][] = http://drupal.org/files/check_type.patch
 projects[nagios][patch][] = http://drupal.org/files/check_checks.patch
 
 ; 1917432-3.patch
-;   - Fixes bug the caused relationships' source arg (path) to only accepts numeric values.
-;		- Fix has been applied in the dev branch and will be available with the next release.
+;   - Fixes issue where a relationships source argument (path) only accepts numeric values.
+;		- Fix has been applied to the dev branch of the Services module. This patch can be removed when the next release is made available.
 ;   - @http://drupal.org/node/1917432
 ;
 ;------------------------------------
