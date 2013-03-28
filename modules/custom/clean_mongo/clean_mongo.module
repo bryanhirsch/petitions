@@ -1,0 +1,53 @@
+<?php
+/**
+ * @file clean_mongo.module
+ */
+
+ /**
+  * Implements hook_help().
+  */
+ // todo
+
+/**
+ * Clean up and filter for mongo queries.
+ * 
+ * @param $params
+ *   String or array to be filtered.
+ */
+function clean_mongo_query($params) {
+  
+  // Store original request
+  $orig_params = $params;
+  
+  // Drop into an array for processing of not an array.
+  if(!is_array($params)) {
+    $params = array($params);
+  }
+  
+  // Filter for all of these terms.
+  $filters = array(
+    'shellcode',
+    'nativeHelper',
+    '{',
+    '}',
+    '(',
+    ')',
+    'Array',
+  );
+  
+  
+  foreach($params as $key => $target) {
+    if(!is_numeric($target)) {
+      foreach($filters as $filter) {
+        $params[$key] = str_replace($filter, '', $target);
+      }
+    }
+  }
+  
+  // If the original request was not an array, return the string.
+  if(!is_array($orig_params)) {
+    return $params[0];
+  }
+  
+  return $params;
+}
