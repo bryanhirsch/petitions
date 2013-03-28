@@ -14,7 +14,9 @@ Release notes:
 
 Update steps:
 
-  1. Deploy the latest code. No other steps are necessary.
+  1. Run the update script to enable new modules.
+
+       drush updb -y
 
 Version 7.x-2.0-beta1 -> 7.x-2.0-beta4 (skipping beta2 and beta3)
 -----------------------------------------------
