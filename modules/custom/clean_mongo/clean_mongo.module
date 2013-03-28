@@ -24,23 +24,10 @@ function clean_mongo_query($params) {
     $params = array($params);
   }
   
-  // Filter for all of these terms.
-  $filters = array(
-    'shellcode',
-    'nativeHelper',
-    '{',
-    '}',
-    '(',
-    ')',
-    'Array',
-  );
-  
   
   foreach($params as $key => $target) {
     if(!is_numeric($target)) {
-      foreach($filters as $filter) {
-        $params[$key] = str_replace($filter, '', $target);
-      }
+      $params[$key] = _clean_mongo_query($target);
     }
   }
   
@@ -50,4 +37,32 @@ function clean_mongo_query($params) {
   }
   
   return $params;
+}
+
+
+/**
+ * @param string $string
+ *  String to sanitize.
+ *
+ * @return
+ *  Sanitized string.
+ */
+function _clean_mongo_query($string) {
+  // Filter for all of these terms.
+  $filters = array(
+    'shellcode',
+    'nativeHelper',
+    'nativehelper',
+    '{',
+    '}',
+    '(',
+    ')',
+    'Array',
+  );
+  
+  foreach ($filters as $filter) {
+    $string = str_replace($filter, '', $string);
+  }
+  
+ return $string; 
 }
