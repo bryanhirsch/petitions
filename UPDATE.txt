@@ -10,6 +10,7 @@ Release notes:
   - Updated services_documentation to support example implementations of API resources
   - Added framework for a Response resource to the Petitions API
   - Added a comment to the Services module patch included with drupal-org.make
+  - Patched a security vulnerability in MongoDB (equivalent of a SQL injection)
 
 Update steps:
 
