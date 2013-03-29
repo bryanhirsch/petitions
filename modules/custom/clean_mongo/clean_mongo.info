@@ -1,3 +1,10 @@
 name = Clean Mongo
 description = Protections for Mongo vulnerabilities
 core = 7.x
+
+
+; Information added by drush on 2013-03-28
+version = ""
+project = "petitions"
+datestamp = "1364512761"
+

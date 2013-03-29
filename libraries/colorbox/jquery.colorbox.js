@@ -1,5 +1,5 @@
 /*!
-	jQuery ColorBox v1.4.3 - 2013-02-18
+	jQuery Colorbox v1.4.6 - 2013-03-28
 	(c) 2013 Jack Moore - jacklmoore.com/colorbox
 	license: http://www.opensource.org/licenses/mit-license.php
 */
@@ -111,7 +111,7 @@
 	$prev,
 	$close,
 	$groupControls,
-	$events = $({}),
+	$events = $('<a/>'),
 	
 	// Variables for cached values or use across multiple functions
 	settings,
@@ -129,6 +129,7 @@
 	publicMethod,
 	div = "div",
 	className,
+	requests = 0,
 	init;
 
 	// ****************
@@ -149,6 +150,12 @@
 
 		return $(element);
 	}
+	
+	// Get the window height using innerHeight when available to avoid an issue with iOS
+	// http://bugs.jquery.com/ticket/6724
+	function winheight() {
+		return window.innerHeight ? window.innerHeight : $(window).height();
+	}
 
 	// Determine the next and previous members in a group.
 	function getIndex(increment) {
@@ -161,7 +168,7 @@
 
 	// Convert '%' and 'px' values to integers
 	function setSize(size, dimension) {
-		return Math.round((/%/.test(size) ? ((dimension === 'x' ? $window.width() : $window.height()) / 100) : 1) * parseInt(size, 10));
+		return Math.round((/%/.test(size) ? ((dimension === 'x' ? $window.width() : winheight()) / 100) : 1) * parseInt(size, 10));
 	}
 	
 	// Checks an href to see if it is a photo.
@@ -311,19 +318,30 @@
 				});
 				index = $related.index(element);
 				
-				// Check direct calls to ColorBox.
+				// Check direct calls to Colorbox.
 				if (index === -1) {
 					$related = $related.add(element);
 					index = $related.length - 1;
 				}
 			}
 			
-            $overlay.css({
-                opacity: parseFloat(settings.opacity),
-                cursor: settings.overlayClose ? "pointer" : "auto",
-                visibility: 'visible'
-            }).show();
-            
+			$overlay.css({
+				opacity: parseFloat(settings.opacity),
+				cursor: settings.overlayClose ? "pointer" : "auto",
+				visibility: 'visible'
+			}).show();
+			
+
+			if (className) {
+				$box.add($overlay).removeClass(className);
+			}
+			if (settings.className) {
+				$box.add($overlay).addClass(settings.className);
+			}
+			className = settings.className;
+
+			$close.html(settings.close).show();
+
 			if (!open) {
 				open = active = true; // Prevents the page-change action from queuing up if the visitor holds down the left or right keys.
 				
@@ -339,14 +357,14 @@
 				loadedWidth = $loaded.outerWidth(true);
 				
 				
-				// Opens inital empty ColorBox prior to content being loaded.
+				// Opens inital empty Colorbox prior to content being loaded.
 				settings.w = setSize(settings.initialWidth, 'x');
 				settings.h = setSize(settings.initialHeight, 'y');
 				publicMethod.position();
 
 				if (isIE6) {
 					$window.bind('resize.' + event_ie6 + ' scroll.' + event_ie6, function () {
-						$overlay.css({width: $window.width(), height: $window.height(), top: $window.scrollTop(), left: $window.scrollLeft()});
+						$overlay.css({width: $window.width(), height: winheight(), top: $window.scrollTop(), left: $window.scrollLeft()});
 					}).trigger('resize.' + event_ie6);
 				}
 				
@@ -355,35 +373,33 @@
 				trigger(event_open, settings.onOpen);
 				
 				$groupControls.add($title).hide();
+
+				$box.focus();
 				
-				$close.html(settings.close).show();
+				// Confine focus to the modal
+				// Uses event capturing that is not supported in IE8-
+				if (document.addEventListener) {
 
-                $box.focus();
-                
-                // Confine focus to the modal
-                // Uses event capturing that is not supported in IE8-
-                if (document.addEventListener) {
+					document.addEventListener('focus', trapFocus, true);
+					
+					$events.one(event_closed, function () {
+						document.removeEventListener('focus', trapFocus, true);
+					});
+				}
 
-                    document.addEventListener('focus', trapFocus, true);
-                    
-                    $events.one(event_closed, function () {
-                        document.removeEventListener('focus', trapFocus, true);
-                    });
-                }
-
-                // Return focus on closing
-                if (settings.returnFocus) {
-                    $events.one(event_closed, function () {
-                        $(element).focus();
-                    });
-                }
+				// Return focus on closing
+				if (settings.returnFocus) {
+					$events.one(event_closed, function () {
+						$(element).focus();
+					});
+				}
 			}
 			
-			publicMethod.load(true);
+			load();
 		}
 	}
 
-	// ColorBox's markup needs to be added to the DOM prior to being called
+	// Colorbox's markup needs to be added to the DOM prior to being called
 	// so that the browser will go ahead and load the CSS background images.
 	function appendHTML() {
 		if (!$box && document.body) {
@@ -391,25 +407,25 @@
 
 			$window = $(window);
 			$box = $tag(div).attr({
-                id: colorbox,
-                'class': isIE ? prefix + (isIE6 ? 'IE6' : 'IE') : '',
-                role: 'dialog',
-                tabindex: '-1'
-            }).hide();
+				id: colorbox,
+				'class': isIE ? prefix + (isIE6 ? 'IE6' : 'IE') : '',
+				role: 'dialog',
+				tabindex: '-1'
+			}).hide();
 			$overlay = $tag(div, "Overlay", isIE6 ? 'position:absolute' : '').hide();
 			$loadingOverlay = $tag(div, "LoadingOverlay").add($tag(div, "LoadingGraphic"));
 			$wrap = $tag(div, "Wrapper");
 			$content = $tag(div, "Content").append(
 				$title = $tag(div, "Title"),
 				$current = $tag(div, "Current"),
-                $prev = $tag('button', "Previous"),
+				$prev = $tag('button', "Previous"),
 				$next = $tag('button', "Next"),
 				$slideshow = $tag('button', "Slideshow"),
-                $loadingOverlay,
+				$loadingOverlay,
 				$close = $tag('button', "Close")
 			);
 			
-			$wrap.append( // The 3x3 Grid that makes up ColorBox
+			$wrap.append( // The 3x3 Grid that makes up Colorbox
 				$tag(div).append(
 					$tag(div, "TopLeft"),
 					$topBorder = $tag(div, "TopCenter"),
@@ -435,12 +451,12 @@
 		}
 	}
 
-	// Add ColorBox's event bindings
+	// Add Colorbox's event bindings
 	function addBindings() {
 		function clickHandler(e) {
 			// ignore non-left-mouse-clicks and clicks modified with ctrl / command, shift, or alt.
 			// See: http://jacklmoore.com/notes/click-events/
-			if (!(e.which > 1 || e.shiftKey || e.altKey || e.metaKey)) {
+			if (!(e.which > 1 || e.shiftKey || e.altKey || e.metaKey || e.control)) {
 				e.preventDefault();
 				launch(this);
 			}
@@ -473,7 +489,7 @@
 						e.preventDefault();
 						publicMethod.close();
 					}
-                    if (open && settings.arrowKey && $related[1] && !e.altKey) {
+					if (open && settings.arrowKey && $related[1] && !e.altKey) {
 						if (key === 37) {
 							e.preventDefault();
 							$prev.click();
@@ -499,7 +515,7 @@
 		return false;
 	}
 
-	// Don't do anything if ColorBox already exists.
+	// Don't do anything if Colorbox already exists.
 	if ($.colorbox) {
 		return;
 	}
@@ -510,8 +526,8 @@
 
 	// ****************
 	// PUBLIC FUNCTIONS
-	// Usage format: $.fn.colorbox.close();
-	// Usage from within an iframe: parent.$.fn.colorbox.close();
+	// Usage format: $.colorbox.close();
+	// Usage from within an iframe: parent.jQuery.colorbox.close();
 	// ****************
 	
 	publicMethod = $.fn[colorbox] = $[colorbox] = function (options, callback) {
@@ -582,11 +598,11 @@
 		}
 		
 		if (settings.bottom !== false) {
-			top += Math.max($window.height() - settings.h - loadedHeight - interfaceHeight - setSize(settings.bottom, 'y'), 0);
+			top += Math.max(winheight() - settings.h - loadedHeight - interfaceHeight - setSize(settings.bottom, 'y'), 0);
 		} else if (settings.top !== false) {
 			top += setSize(settings.top, 'y');
 		} else {
-			top += Math.round(Math.max($window.height() - settings.h - loadedHeight - interfaceHeight, 0) / 2);
+			top += Math.round(Math.max(winheight() - settings.h - loadedHeight - interfaceHeight, 0) / 2);
 		}
 
 		$box.css({top: offset.top, left: offset.left, visibility:'visible'});
@@ -824,8 +840,8 @@
 		}
 	};
 
-	publicMethod.load = function (launched) {
-		var href, setResize, prep = publicMethod.prep, $inline;
+	function load () {
+		var href, setResize, prep = publicMethod.prep, $inline, request = ++requests;
 		
 		active = true;
 		
@@ -833,17 +849,7 @@
 		
 		element = $related[index];
 		
-		if (!launched) {
-			makeSettings();
-		}
-
-		if (className) {
-			$box.add($overlay).removeClass(className);
-		}
-		if (settings.className) {
-			$box.add($overlay).addClass(settings.className);
-		}
-		className = settings.className;
+		makeSettings();
 		
 		trigger(event_purge);
 		
@@ -880,7 +886,7 @@
 		
 		if (settings.inline) {
 			// Inserts an empty placeholder where inline content is being pulled from.
-			// An event is bound to put inline content back when ColorBox closes or loads new content.
+			// An event is bound to put inline content back when Colorbox closes or loads new content.
 			$inline = $tag(div).hide().insertBefore($(href)[0]);
 
 			$events.one(event_purge, function () {
@@ -906,6 +912,10 @@
 			})
 			.one('load', function () {
 				var percent;
+
+				if (request !== requests) {
+					return;
+				}
 
 				if (settings.retinaImage && window.devicePixelRatio > 1) {
 					photo.height = photo.height / window.devicePixelRatio;
@@ -952,27 +962,29 @@
 			}, 1);
 		} else if (href) {
 			$loadingBay.load(href, settings.data, function (data, status) {
-				prep(status === 'error' ? $tag(div, 'Error').html(settings.xhrError) : $(this).contents());
+				if (request === requests) {
+					prep(status === 'error' ? $tag(div, 'Error').html(settings.xhrError) : $(this).contents());
+				}
 			});
 		}
-	};
+	}
 		
 	// Navigates to the next page/image in a set.
 	publicMethod.next = function () {
 		if (!active && $related[1] && (settings.loop || $related[index + 1])) {
 			index = getIndex(1);
-			publicMethod.load();
+			launch($related[index]);
 		}
 	};
 	
 	publicMethod.prev = function () {
 		if (!active && $related[1] && (settings.loop || index)) {
 			index = getIndex(-1);
-			publicMethod.load();
+			launch($related[index]);
 		}
 	};
 
-	// Note: to use this within an iframe use the following format: parent.$.fn.colorbox.close();
+	// Note: to use this within an iframe use the following format: parent.jQuery.colorbox.close();
 	publicMethod.close = function () {
 		if (open && !closing) {
 			
@@ -1002,7 +1014,7 @@
 		}
 	};
 
-	// Removes changes ColorBox made to the document, but does not remove the plugin
+	// Removes changes Colorbox made to the document, but does not remove the plugin
 	// from jQuery.
 	publicMethod.remove = function () {
 		$([]).add($box).add($overlay).remove();
@@ -1014,7 +1026,7 @@
 		$(document).unbind('click.'+prefix);
 	};
 
-	// A method for fetching the current element ColorBox is referencing.
+	// A method for fetching the current element Colorbox is referencing.
 	// returns a jQuery object.
 	publicMethod.element = function () {
 		return $(element);
