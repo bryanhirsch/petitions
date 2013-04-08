@@ -6,6 +6,23 @@ Send me your language configuration files.  See /i18n/jquery.colorbox-de.js as a
 
 ## Changelog:
 
+### Version 1.4.10 - 2013/4/2
+
+* Better 'old IE' feature detection that fixes an error with jQuery 2.0.0pre.
+
+### Version 1.4.9 - 2013/4/2
+
+* Fixes bug introduced in previous version.
+
+### Version 1.4.8 - 2013/4/2
+
+* Dropped IE6 support.
+* Fixed other issues with $.colorbox.remove.
+
+### Version 1.4.7 - 2013/4/1
+
+* Prevented an error if $.colorbox.remove is called during the transition.
+
 ### Version 1.4.6 - 2013/3/19
 
 * Minor change to work around a jQuery 1.4.2 bug for legacy users.
