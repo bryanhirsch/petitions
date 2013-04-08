@@ -3,8 +3,8 @@ description = Add "front" class to <li> for <front> link in Drupal Main Menu
 core = 7.x
 
 
-; Information added by drush on 2013-03-28
+; Information added by drush on 2013-04-08
 version = ""
 project = "petitions"
-datestamp = "1364512761"
+datestamp = "1365457016"
 
