@@ -35,7 +35,7 @@ class PetitionLoadMongoRaw implements IPetitionLoadRaw {
    *   Returns current instance of object.
    */
   public function setBaseURL($base_url) {
-    $this->baseURL = $base_url;
+    $this->baseURL = variable_get('petitions_data_base_url', $base_url);
 
     return $this;
   }
@@ -251,7 +251,7 @@ class PetitionLoadMongoRaw implements IPetitionLoadRaw {
 
     return $response;
   }
-  
+
   /**
    * Helper function to translate status codes into readable string formats.
    *
