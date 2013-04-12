@@ -7,10 +7,18 @@ Version 7.x-2.0-beta7 -> 7.x-2.0-beta8
 Release notes:
 
   - Updated Drupal core to 7.21
+  - Removed clean_mongo, clean_mongo() calls, and added requirement for Mongo 2.2.4
+  - Fixed a bug that caused the API to produce links with the wrong $base_url
+    when the API is exposed on a different domain by adding a settings field
 
 Update steps:
 
-  1. Run the update script.
+  1. Prior to deployment, disable and uninstall clean_mongo:
+
+       drush dis clean_mongo -y
+       drush pm-uninstall clean_mongo
+
+  2. Run the update script.
 
        drush updb -y
 
