@@ -381,7 +381,7 @@ class SignaturesMongoRaw implements ISignaturesRaw {
     );
 
     $results = $this->getCollection()
-      ->find(clean_mongo_query($query), $fields)
+      ->find($query, $fields)
       ->limit($this->getLimit())
       ->skip($this->getOffset())
       ->sort(array('timestamp' => -1));
