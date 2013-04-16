@@ -368,6 +368,13 @@ class PetitionsMongoRaw implements IPetitionsRaw {
 
       $response['results'][] = $petition;
     }
+    
+        // Set the result set information.
+    $response['metadata']['resultset'] = array(
+      'count' => $results->count(),
+      'offset' => $this->getOffset(),
+      'limit' => $this->getLimit(),
+    );
 
     $response['metadata']['execution time'] = $this->calcExecutionTime();
 
