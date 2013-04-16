@@ -203,7 +203,7 @@ class SignaturesMongoRaw implements ISignaturesRaw {
    *   Returns current instance of object.
    */
   public function setBaseURL($base_url) {
-    $this->baseURL = variable_get('petitions_data_base_url', $base_url);
+    $this->baseURL = variable_get('petitions_data_petitions_website_url', $base_url);
 
     return $this;
   }
