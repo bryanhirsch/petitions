@@ -290,11 +290,20 @@ class PetitionsMongoRaw implements IPetitionsRaw {
     // @TODO: This really should be added as a publicly accessible method.
     $this->setQuery(
       array(
-        'petition_status' => array(
-          '$in' => array(
-            WH_PETITION_STATUS_PUBLIC,
-            WH_PETITION_STATUS_UNDER_REVIEW,
-            WH_PETITION_STATUS_REVIEWED,
+        '$or' => array(
+          array(
+            'petition_status' => array(
+              '$in' => array(
+                WH_PETITION_STATUS_PUBLIC,
+                WH_PETITION_STATUS_UNDER_REVIEW,
+                WH_PETITION_STATUS_REVIEWED,
+              ),
+            ),
+          ),
+          array(
+            'signature_count' => array(
+              '$gt' => array( 150 )
+            ),
           ),
         ),
       )
