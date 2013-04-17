@@ -291,7 +291,7 @@ class PetitionsMongoRaw implements IPetitionsRaw {
     $this->setQuery(
       array(
         'signature_count' => array(
-          '$gt' => array( 150 )
+          '$gt' => 150
         ),
       )
     );
