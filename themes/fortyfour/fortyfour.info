@@ -163,9 +163,9 @@ settings[fortyfour_use_whitehouse_subfooter] = 1
 ;plugins[panels][layouts] = layouts
 
 
-; Information added by drush on 2013-04-08
+; Information added by drush on 2013-04-18
 version = "7.x-1.0-alpha5"
 core = "7.x"
 project = "fortyfour"
-datestamp = "1365457019"
+datestamp = "1366314956"
 
