@@ -293,6 +293,7 @@ class PetitionsMongoRaw implements IPetitionsRaw {
         'signature_count' => array(
           '$gt' => new MongoInt64(150)
         ),
+        'petition_status' => array('$ne' => MongoInt64(6)) 
       )
     );
   }
