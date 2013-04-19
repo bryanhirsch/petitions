@@ -189,6 +189,21 @@ function api_users_services_account_object_alter($account) {
 }
 
 /**
+ * Implements of hook_services_documentation_resource_info().
+ *
+ * @return array
+ *   Resource informational elements
+ */
+function api_users_services_documentation_resource_info() {
+  return array(
+    'users' => array(
+      '#description' => t('Returns a list of anonymized users.'),
+      '#limit' => t('10 requests per second.'),
+    ),
+  );
+}
+
+/**
  * Documentation callback for index operation of index resource.
  */
 function _api_users_index_doc() {
