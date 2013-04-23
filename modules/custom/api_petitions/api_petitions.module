@@ -265,7 +265,9 @@ function _api_petitions_load_signatures($petition_id, $city, $state, $zipcode, $
 function api_petitions_services_documentation_resource_info() {
   return array(
     'petitions' => array(
-      '#description' => t("Returns a list of petitions, individual petitions, and signatures attached to an individual petition.<br />The bulk data is available for <a href=\"@url\">Download</a>.", array('@url' => url('https://api.whitehouse.gov/v1/downloads/data.sql.zip'))),
+      '#description' => t("Returns a list of petitions, individual petitions,
+      and signatures attached to an individual petition.<br />Bulk data is
+      available for download here: <a href=\"@url\">@url</a>.", array('@url' => url('https://api.whitehouse.gov/v1/downloads/data.sql.zip'))),
       '#limit' => t('10 requests per second.'),
     ),
   );
