@@ -4,10 +4,3 @@ core = 7.x
 package = petitions.whitehouse.gov
 scripts[] = petitions_usermenu.js
 stylesheets[all][] = petitions_usermenu.css
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

@@ -30,10 +30,3 @@ dependencies[] = wh_zipcodelookup
 ;  wh_user_ss_data
 ;   
 dependencies[] = wh_core
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

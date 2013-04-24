@@ -15,9 +15,3 @@ files[] = classes/SignaturesRawFactory.class.inc
 files[] = classes/PetitionsMongoRaw.class.inc
 files[] = classes/PetitionLoadMongoRaw.class.inc
 files[] = classes/SignaturesMongoRaw.class.inc
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

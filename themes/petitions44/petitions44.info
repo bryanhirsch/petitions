@@ -47,10 +47,3 @@ scripts[] = js/main.js
 
 features[] = main_menu
 features[] = secondary_menu
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

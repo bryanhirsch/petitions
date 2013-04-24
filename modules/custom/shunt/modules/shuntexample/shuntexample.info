@@ -4,10 +4,3 @@ core = 7.x
 package = Shunt
 dependencies[] = shunt
 
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

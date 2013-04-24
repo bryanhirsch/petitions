@@ -10,10 +10,3 @@ name = "Taxonomy Sync"
 package = "Features"
 project = "taxonomy_sync"
 version = "7.x-1.0"
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-

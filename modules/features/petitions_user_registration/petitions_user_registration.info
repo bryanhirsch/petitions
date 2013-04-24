@@ -11,10 +11,3 @@ features[rules_config][] = "rules_user_validate_redirect"
 name = "Petitions - User Registration"
 package = "Features"
 php = "5.2.4"
-
-
-; Information added by drush on 2013-04-18
-version = ""
-project = "petitions"
-datestamp = "1366332973"
-
