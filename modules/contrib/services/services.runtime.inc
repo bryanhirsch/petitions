@@ -28,7 +28,7 @@ class ServicesException extends Exception {
   public function __construct($message, $code = 0, $data = NULL) {
     parent::__construct($message, $code);
 
-    $this->data = $message;
+    $this->data = !empty($data) ? $data : $message;
   }
 
   /**
@@ -101,7 +101,7 @@ function services_controller_execute($controller, $args = array(), $options = ar
   }
 
   $original_user = $user;
-  
+
   if (strpos($controller['callback'], 'login') !== FALSE && strpos($controller['callback'], 'logout') !== FALSE) {
     $old_state = drupal_save_session();
     drupal_save_session(FALSE);
