@@ -1,11 +1,11 @@
 UPDATE
 ======
 
-Version 7.x-2.0-beta9 -> 7.x-2.0-beta11
+Version 7.x-2.0-beta11 -> 7.x-2.0-beta12
 -----------------------------------------------
 
 Release notes:
-  
+
   - Move shunt module into contrib.
 
 Update steps:
