@@ -179,7 +179,7 @@ function services_documentation_theme($existing, $type, $theme, $path) {
 function services_documentation_homepage() {
   // Check to see if user has provided a custom Services Documentation homepage.
   // If so, return that.
-  $homepage = variable_get('services_documentation_base_path', 'developers');
+  $homepage = variable_get('services_documentation_homepage', 'hello-world');
   if ($homepage != 'hello-world') {
     // Grab the custom page's content and return that.
     if ($page = menu_get_item($homepage)) {
