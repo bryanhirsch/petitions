@@ -18,7 +18,7 @@ function services_documentation_menu() {
   $versions = $version_info['versions'];
   $items[$base_path] = array(
     'title' => 'Services Documentation',
-    'page callback' => 'services_documentation_versions_overview_page',
+    'page callback' => 'services_documentation_homepage',
     'access arguments' => array('view services documentation'),
   );
 
@@ -32,6 +32,16 @@ function services_documentation_menu() {
       'page arguments' => array("$version"),
     );
   }
+
+  // Provide an administration page for configuring homepage content.
+  $items['admin/config/services/documentation'] = array(
+    'title' => 'Services Documentation',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('services_documentation_configure'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'services_documentation.admin.inc',
+    'description' => "Configure API documentation.",
+  );
 
   return $items;
 }
@@ -164,9 +174,21 @@ function services_documentation_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Page callback for documentation versions overview.
+ * Page callback for documentation homepage.
  */
-function services_documentation_versions_overview_page() {
+function services_documentation_homepage() {
+  // Check to see if user has provided a custom Services Documentation homepage.
+  // If so, return that.
+  $homepage = variable_get('services_documentation_base_path', 'developers');
+  if ($homepage != 'hello-world') {
+    // Grab the custom page's content and return that.
+    if ($page = menu_get_item($homepage)) {
+      return $page;
+    }
+  }
+
+  // If there is no custom homepage, provide the default listing of documentation
+  // for each available API version.
   $base_path = variable_get('services_documentation_base_path', 'developers');
   $version_info = services_documentation_versions_info();
   $versions = $version_info['versions'];
