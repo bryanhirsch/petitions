@@ -17,7 +17,7 @@ function services_documentation_menu() {
   // API versions overview.
   $versions = $version_info['versions'];
   $items['services-documentation/versions'] = array(
-    'title' => 'Services Documentation',
+    'title' => 'Services Documentation: API Versions',
     'page callback' => 'services_documentation_versions_overview_page',
     'access arguments' => array('view services documentation'),
   );
@@ -408,7 +408,7 @@ function services_documentation_save_settings($services_documentation_base_path 
   if (!$is_same_base_path || $is_same_homepage_alias) {
 
     // Delete the stale path alias.
-    if ($path = path_load($old_base_path)) {
+    if ($path = path_load(array('alias' => $old_base_path))) {
       path_delete($path);
     }
 
