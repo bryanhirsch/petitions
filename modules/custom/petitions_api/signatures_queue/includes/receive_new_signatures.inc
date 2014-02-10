@@ -59,8 +59,18 @@ function _signatures_queue_receive_new_signatures($job_id, $server_name, $worker
   // Input is all valid. Build the queue item.
   $item = _signatures_queue_build_new_queue_item($signature);
 
-  // And enqueue it.
+  // Enqueue it.
   _signatures_queue_enqueue_item($item);
+
+  // Log statistical event.
+  watchdog('petitions_api', 'Received a new signature for petition @petition', array(
+    '@petition' => $signature['petition_id'],
+    '_WHSTATS' => array(
+      'app' => 'petitions_api',
+      'metric' => 'new_signature_received',
+      'type' => 'increment',
+    ),
+  ), WATCHDOG_INFO);
 
   return SIGNATURES_QUEUE_STATUS_OK;
 }
