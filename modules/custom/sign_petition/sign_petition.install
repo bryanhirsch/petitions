@@ -1,0 +1,29 @@
+<?php
+/**
+ * @file
+ * Checking the petitions-php-sdk requirement with the help of the libraries
+ * module
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function sign_petition_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    $t = get_t();
+    $library = libraries_detect('petitions-php-sdk');
+
+    if (empty($library['installed'])) {
+      $requirements['petitions-php-sdk'] = array(
+        'title' => $t('Petitions PHP SDK'),
+        'value' => $t('(None).'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('Petitions PHP SDK is necessary for sign_petition to work.'),
+      );
+    }
+  }
+
+  return $requirements;
+}

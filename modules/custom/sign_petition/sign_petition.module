@@ -1,0 +1,173 @@
+<?php
+
+/**
+ * @file
+ * The Sign Petition module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function sign_petition_menu() {
+  $items = array();
+
+  $items['admin/config/sign-petition'] = array(
+    'title' => 'Settings',
+    'description' => 'Petition Sign configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sign_petition_configure'),
+    'access arguments' => array('administer petition sign'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'sign_petition.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function sign_petition_block_info() {
+  $blocks = array();
+
+  $blocks['sign_petition'] = array(
+    'info' => t('Sign Petition Form'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function sign_petition_block_view($delta = '') {
+  switch ($delta) {
+    case 'sign_petition':
+      $block['subject'] = t('Sign Petition');
+      $block['content'] = drupal_get_form('sign_petition_form');
+      break;
+  }
+  return $block;
+}
+
+/**
+ * The petition signing form.
+ *
+ * @todo: The fields in this form should really be pulled automatically from the
+ * Signature API.
+ */
+function sign_petition_form($form, &$form_state) {
+  $form = array();
+
+  $library = libraries_load("petitions-php-sdk");
+
+  if ($library['installed']) {
+    $petitions_api = new PetitionsApiConnector(
+      variable_get('sign_petition_base_url'),
+      variable_get('sign_petition_api_key'));
+
+    $petition_id = variable_get('sign_petition_petition_id');
+    $response = $petitions_api->getPetition($petition_id);
+    $petition = $response->results[0];
+
+    $form['title'] = array(
+      '#markup' => '<div>' . t('Petition:') . ' ' . $petition->title . '</div>',
+    );
+    $form['count'] = array(
+      '#markup' => '<div>' . t('Signatures:') . ' ' . $petition->signatureCount
+      . '</div>',
+    );
+    $form['first_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('First Name'),
+      '#required' => TRUE,
+    );
+    $form['last_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Last Name'),
+      '#required' => TRUE,
+    );
+    $form['zip'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Postal Code'),
+      '#required' => TRUE,
+    );
+    $form['email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Email'),
+      '#required' => TRUE,
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Sign'),
+    );
+  }
+  else {
+    $form['error'] = array(
+      '#markup' => "<p>Petitions PHP SDK not installed</p>",
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Signing form validation.
+ */
+function sign_petition_form_validate($form, &$form_state) {
+  // @todo: is any extra validation needed?
+}
+
+/**
+ * Signing form submit.
+ */
+function sign_petition_form_submit($form, &$form_state) {
+  $petitions_api = new PetitionsApiConnector(
+    variable_get('sign_petition_base_url'),
+    variable_get('sign_petition_api_key'));
+
+  $signature = array(
+    'first_name' => $form_state['values']['first_name'],
+    'last_name' => $form_state['values']['last_name'],
+    'zip' => $form_state['values']['zip'],
+    'email' => $form_state['values']['email'],
+    'petition_id' => variable_get('sign_petition_petition_id'),
+    'signature_source_api_key' => variable_get('sign_petition_api_key'),
+  );
+
+  $response = $petitions_api->sendSignature($signature);
+  if ($response->metadata->responseInfo->status == 200) {
+    drupal_set_message('Signatures submitted successfully.');
+  }
+  else {
+    drupal_set_message('There was an error submitting your signature.', 'error');
+  }
+
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function sign_petition_libraries_info() {
+
+  $libraries['petitions-php-sdk'] = array(
+    // Only used in administrative UI of Libraries API.
+    'name' => 'Petitions PHP SDK',
+    'vendor url' => 'http://',
+    'download url' => 'http://',
+    'version arguments' => array(
+      'file' => 'petitions_php_sdk.php',
+      'pattern' => "%.*@version.([0-9\.]+)%",
+
+      'lines' => 10,
+    ),
+    'files' => array(
+      'php' => array(
+        'petitions_php_sdk.php',
+      ),
+    ),
+  );
+  return $libraries;
+}

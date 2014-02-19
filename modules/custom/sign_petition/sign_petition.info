@@ -1,0 +1,5 @@
+name = Sign Petition
+description = A form to sign petitions via the Petitions API.
+core = 7.x
+
+dependencies[] = libraries
