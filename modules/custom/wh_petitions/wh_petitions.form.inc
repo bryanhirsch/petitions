@@ -642,6 +642,17 @@ function wh_petitions_create_petition_step_3_submit($form, &$form_state) {
       array('$set' => array('user_tags' => $petition['user_tags'], 'body' => $petition['body'], 'body_keywords' => $petition['body_keywords']))
     );
     $form_state['petition'] = $petition;
+
+    // MongoDB/MySQL conversion.
+    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
+    if($save_to_mysql){
+      $node = petition_load_from_legacy_id($form_state['petition_id']);
+      if($node){
+        $node->body[LANGUAGE_NONE][0]['value'] = $petition['body'];
+        node_save($node);
+      }
+    }
+    // MongoDB/MySQL conversion.
   }
 
   // Go to the next page
@@ -1353,6 +1364,32 @@ function wh_petitions_inappropriate_modal($petition_id) {
         array('$set' => array('abuse_flags' => $petition['abuse_flags'], 'abuse_count' => sizeof($petition['abuse_flags'])))
       );
     }
+
+    // MongoDB/MySQL conversion.
+    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
+    if ($save_to_mysql) {
+    $node = petition_load_from_legacy_id($petition_id);
+      if($node){
+
+        $items = field_get_items("node", $node, "field_abuse_count");
+        if($items){
+          $node->field_abuse_count[LANGUAGE_NONE][0]['value']++;
+        }else{
+          $node->field_abuse_count[LANGUAGE_NONE][0]['value'] = 0;
+        }
+
+        $items = field_get_items("node", $node, "field_abuse_flags");
+        if($items){
+          $node->field_abuse_flags[LANGUAGE_NONE][]['target_id'] = $user->uid;
+        }else{
+          $node->field_abuse_flags[LANGUAGE_NONE][0]['target_id'] = $user->uid;
+        }
+
+        node_save($node);
+      }
+    }
+    // MongoDB/MySQL conversion.
+
   }
 
   // Redirect to the main site or the petition tool site, depending on where this request came from
@@ -1376,6 +1413,8 @@ function wh_petitions_delete_modal($petition_id) {
     }
   }
 
+  // MongoDB/MySQL conversion @todo How are we archiving nodes?
+  
   $redirect_page = 'dashboard';
   if (!empty($_GET['process'])) {
     if ($_GET['process'] == 'create_form') {

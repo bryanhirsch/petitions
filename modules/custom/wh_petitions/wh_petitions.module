@@ -991,15 +991,6 @@ function wh_petitions_similar_petitions(&$conn, $petition_id) {
  * of how many petitions/responses are related to each issue term.
  */
 function wh_petitions_cron() {
-  // Skip this if in a simpletest run.
-  // This condition is added because in certain cases simpletest tests will not
-  // complete when this function is called.
-  // @todo remove once the mongo migration is completed as
-  // Simpletest should be compatible with cron.
-  global $drupal_test_info;
-  if (!empty($drupal_test_info['test_run_id'])) {
-    return;
-  }
   module_load_include('inc', 'wh_petitions', 'wh_petitions.cron');
   wh_petitions_close_petitions();
 
@@ -1242,6 +1233,15 @@ function wh_petitions_save_petition(&$collection, $petition) {
     }
     $collection->save($petition);
     petitions_data_freshen_cached_petition($petition['_id']);
+
+    // MongoDB/MySQL conversion.
+    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
+    if($save_to_mysql){
+      module_load_include("inc", "petition", "petition.mongo2mysql");
+      petition_mongodb_save($petition);
+    }
+    // MongoDB/MySQL conversion.
+    
     return $petition['_id']->__toString();
   }
 }
@@ -1258,6 +1258,15 @@ function wh_petitions_save_signature($signature, $collection = '') {
   if (!empty($signature) && !empty($collection)) {
     $collection->save($signature);
     module_invoke_all('wh_petitions_signature_save', $signature, $collection);
+
+    // MongoDB/MySQL conversion.
+    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
+    if($save_to_mysql){
+      module_load_include("inc", "signature_mail", "signature_mail.mongo2mysql");
+      signature_mail_mongodb_save($signature);
+    }
+    // MongoDB/MySQL conversion.
+
     return $signature['_id']->__toString();
   }
 }
