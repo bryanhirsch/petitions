@@ -8,3 +8,4 @@ dependencies[] = signature_mail
 
 files[] = petsig.inc
 files[] = plugins/destinations/signature.inc
+files[] = plugins/destinations/node_modified.inc

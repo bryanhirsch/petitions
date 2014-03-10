@@ -49,7 +49,7 @@ class PetitionMigration extends PetSigMigration {
         "created" => "Created",
     ));
 
-    $this->destination = new MigrateDestinationNode('petition');
+    $this->destination = new MigrateDestinationNodeModified('petition');
 
     $this->addSimpleMappings(array('uid', 'title', 'body', 'created'));
 

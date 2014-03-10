@@ -78,4 +78,36 @@ class MigrateDestinationSignatureEntity extends MigrateDestinationEntity {
       return array($signature->id);
     }
   }
+
+  /**
+   * Overloading prepare method.
+   */
+  public function prepare($entity, stdClass $source_row) {
+    parent::prepare($entity, $source_row);
+
+    if (isset($entity->user_first_name)) {
+      $entity->user_first_name = $this->replace4byte($entity->user_first_name);
+    }
+
+    if (isset($entity->user_last_name)) {
+      $entity->user_last_name = $this->replace4byte($entity->user_last_name);
+    }
+  }
+
+  /**
+   * Replace 4-byte utf8 chars with an undefined symbol.
+   *
+   * @param string $string
+   *   A string.
+   * 
+   * @return string
+   *   the string without 4 byte utf8 chars.
+   */
+  public function replace4byte($string) {
+    return preg_replace('%(?:
+          \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3
+        | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
+        | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16
+      )%xs', "�", $string);
+  }
 }
