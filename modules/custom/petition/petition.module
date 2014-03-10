@@ -104,3 +104,96 @@ function petition_node_info() {
   );
   return $items;
 }
+
+/**
+ * Implements hook_wh_petitions_petition_save().
+ */
+function petition_wh_petitions_petition_save($petition) {
+
+  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+    return;
+  }
+
+  module_load_include("inc", "petition", "includes/petition.mongo2mysql");
+  petition_mongodb_save($petition);
+}
+
+/**
+ * Implements hook_wh_petitions_petition_close().
+ */
+function petition_wh_petitions_petition_close($petition) {
+
+  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition['_id']);
+  if ($node) {
+    $node->field_petition_status[LANGUAGE_NONE][0]['value'] = WH_PETITION_STATUS_CLOSED;
+    // We are not saving the time of closing.
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_wh_petitions_petition_body_update().
+ */
+function petition_wh_petitions_petition_body_update($petition_id, $body) {
+
+  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition_id);
+  if ($node) {
+    $node->body[LANGUAGE_NONE][0]['value'] = $body;
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_wh_petitions_petition_inappropriate().
+ */
+function petition_wh_petitions_petition_inappropriate($petition_id) {
+
+  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition_id);
+
+  if ($node) {
+    $items = field_get_items("node", $node, "field_abuse_count");
+    if ($items) {
+      $node->field_abuse_count[LANGUAGE_NONE][0]['value']++;
+    }
+    else {
+      $node->field_abuse_count[LANGUAGE_NONE][0]['value'] = 0;
+    }
+
+    $items = field_get_items("node", $node, "field_abuse_flags");
+
+    if ($items) {
+      $node->field_abuse_flags[LANGUAGE_NONE][]['target_id'] = $user->uid;
+    }
+    else {
+      $node->field_abuse_flags[LANGUAGE_NONE][0]['target_id'] = $user->uid;
+    }
+
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_simple_toggle_info().
+ */
+function petition_simple_toggle_info() {
+  $toggles = array();
+
+  $toggles['petition']['save_petition_mysql'] = array(
+    'title' => "Save Petitions to MySQL",
+    'default_state' => 0,
+  );
+
+  return $toggles;
+}

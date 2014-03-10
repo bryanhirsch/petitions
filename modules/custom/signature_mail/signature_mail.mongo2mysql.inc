@@ -11,10 +11,12 @@
  *   An array of data as it is structure when loaded from MongoDB.
  */
 function signature_mail_mongodb_save($mongodb_signature) {
-  // Turn _id into the legacy_id.
-  $_id = $mongodb_signature['_id']->__toString();
-  unset($mongodb_signature['_id']);
-  $mongodb_signature['legacy_id'] = $_id;
+  // Turn signature_id into the legacy_id.
+  if (array_key_exists('signature_id', $mongodb_signature)) {
+    $_id = $mongodb_signature['signature_id'];
+    unset($mongodb_signature['signature_id']);
+    $mongodb_signature['legacy_id'] = $_id;
+  }
 
   // Turn the mongodb petition id, into the legacy_petition_id.
   $petition_id = $mongodb_signature['petition_id'];
@@ -27,12 +29,18 @@ function signature_mail_mongodb_save($mongodb_signature) {
     $mongodb_signature['petition_id'] = $node->nid;
   }
 
-  $user = $mongodb_signature['user'];
-  unset($mongodb_signature['user']);
+  $property_map = array(
+    "first_name" => "user_first_name",
+    "last_name" => "user_last_name",
+    "zip" => "user_zip",
+    "timestamp_submitted" => "timestamp",
+    "client_ip" => "ip_address",
+  );
 
-  foreach ($user as $property => $value) {
-    $pn = "user_" . $property;
-    $mongodb_signature[$pn] = $value;
+  foreach ($property_map as $current => $needed) {
+    $temp = $mongodb_signature[$current];
+    unset($mongodb_signature[$current]);
+    $mongodb_signature[$needed] = $temp;
   }
 
   // Let's double check that we have default values for all properties.

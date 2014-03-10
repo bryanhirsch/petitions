@@ -1234,13 +1234,7 @@ function wh_petitions_save_petition(&$collection, $petition) {
     $collection->save($petition);
     petitions_data_freshen_cached_petition($petition['_id']);
 
-    // MongoDB/MySQL conversion.
-    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
-    if($save_to_mysql){
-      module_load_include("inc", "petition", "petition.mongo2mysql");
-      petition_mongodb_save($petition);
-    }
-    // MongoDB/MySQL conversion.
+    module_invoke_all("wh_petitions_petition_save", $petition);
     
     return $petition['_id']->__toString();
   }
@@ -1258,14 +1252,6 @@ function wh_petitions_save_signature($signature, $collection = '') {
   if (!empty($signature) && !empty($collection)) {
     $collection->save($signature);
     module_invoke_all('wh_petitions_signature_save', $signature, $collection);
-
-    // MongoDB/MySQL conversion.
-    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
-    if($save_to_mysql){
-      module_load_include("inc", "signature_mail", "signature_mail.mongo2mysql");
-      signature_mail_mongodb_save($signature);
-    }
-    // MongoDB/MySQL conversion.
 
     return $signature['_id']->__toString();
   }
@@ -1951,4 +1937,28 @@ function wh_petitions_increment_signature_count(&$petition, $connection = FALSE)
 
   // Reload petition object.
   $petition = wh_petitions_load_slim_petition($connection, $petition['_id'], $slim_petition_elements);
+}
+
+/**
+ * Implements hook_signtures_queue_signature_post_process().
+ */
+function wh_petitions_signtures_queue_signature_post_process_alter(&$item, $user){
+
+  // The wh_petitions_create_signature function called by
+  // wh_petitions_create_new_signature determines if this user has already signed the petition.
+  $signature_id = wh_petitions_create_new_signature($item['petition_id'], $user, $item['client_ip']);
+
+  $item['signature_id'] = $signature_id;
+}
+
+function wh_petitions_simple_toggle_info(){
+  $toggles = array();
+
+  $toggles['wh_petitions']['deactivate_petition_creation'] =
+  array(
+    'title' => "Deactivate petition creation",
+    'default_state' => 0,
+  );
+
+  return $toggles;
 }

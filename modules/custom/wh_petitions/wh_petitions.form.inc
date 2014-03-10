@@ -323,9 +323,20 @@ function wh_petitions_create_petition_step_1_validate($form, &$form_state) {
 
 /**
  * Submit handler for step 1 of the create a petition form.
+ *
  * Create a draft petition object and rebuild the form to go to step 2.
+ * @TODO: Agnosticize this submit handler so multiple storage systems can act
+ * on the data.
  */
 function wh_petitions_create_petition_step_1_submit($form, &$form_state) {
+
+  // If the simple toggle module is active, and the deactivate petition creation
+  // toggle has been set, we don't need to do anything.
+  if(module_exists('simple_toggle') &&
+          simple_toggle_state("wh_petitions", 'deactivate_petition_creation')){
+    return;
+  }
+
   // Save the petition as a draft and add the id to the form state
   global $user;
   $conn = wh_petitions_mongo_petition_connection();
@@ -374,8 +385,7 @@ function wh_petitions_create_petition_step_1_submit($form, &$form_state) {
       $petition['nice_url'] = "petition/detail/$id";
       wh_petitions_save_petition($conn, $petition);
     }
-
-
+    
     // Go to the next page
     $form_state['create_page'] = 2;
     $form_state['rebuild'] = TRUE;
@@ -624,7 +634,11 @@ function wh_petitions_create_petition_step_3_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for step 3 of the create a petition form.  Save the the description and keywords to the petition
+ * Submit handler for step 3 of the create a petition form.
+ *
+ * Save the the description and keywords to the petition.
+ * @TODO: Agnosticize this submit handler so multiple storage systems can act
+ * on the data.
  */
 function wh_petitions_create_petition_step_3_submit($form, &$form_state) {
   global $user;
@@ -643,16 +657,8 @@ function wh_petitions_create_petition_step_3_submit($form, &$form_state) {
     );
     $form_state['petition'] = $petition;
 
-    // MongoDB/MySQL conversion.
-    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
-    if($save_to_mysql){
-      $node = petition_load_from_legacy_id($form_state['petition_id']);
-      if($node){
-        $node->body[LANGUAGE_NONE][0]['value'] = $petition['body'];
-        node_save($node);
-      }
-    }
-    // MongoDB/MySQL conversion.
+    module_invoke_all("wh_petitions_petition_body_update", $form_state['petition_id'],
+            $petition['body']);
   }
 
   // Go to the next page
@@ -662,6 +668,9 @@ function wh_petitions_create_petition_step_3_submit($form, &$form_state) {
 
 /**
  * Fourth page of the create a petition form - preview + submit/save/delete
+ *
+ * @TODO: Agnosticize this submit handler so multiple storage systems
+ * can act on the data.
  */
 function wh_petitions_create_petition_step_4($form, &$form_state) {
   global $user;
@@ -779,7 +788,11 @@ function wh_petitions_create_petition_step_4($form, &$form_state) {
 }
 
 /**
- * Submit handler for step 4 of the create a petition form.  Publish the petition.
+ * Submit handler for step 4 of the create a petition form.
+ *
+ * Publish the petition.
+ * @TODO: Agnosticize this submit handler so multiple storage systems can act
+ * on the data.
  */
 function wh_petitions_create_petition_step_4_submit($form, &$form_state) {
   global $user;
@@ -1365,30 +1378,7 @@ function wh_petitions_inappropriate_modal($petition_id) {
       );
     }
 
-    // MongoDB/MySQL conversion.
-    $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
-    if ($save_to_mysql) {
-    $node = petition_load_from_legacy_id($petition_id);
-      if($node){
-
-        $items = field_get_items("node", $node, "field_abuse_count");
-        if($items){
-          $node->field_abuse_count[LANGUAGE_NONE][0]['value']++;
-        }else{
-          $node->field_abuse_count[LANGUAGE_NONE][0]['value'] = 0;
-        }
-
-        $items = field_get_items("node", $node, "field_abuse_flags");
-        if($items){
-          $node->field_abuse_flags[LANGUAGE_NONE][]['target_id'] = $user->uid;
-        }else{
-          $node->field_abuse_flags[LANGUAGE_NONE][0]['target_id'] = $user->uid;
-        }
-
-        node_save($node);
-      }
-    }
-    // MongoDB/MySQL conversion.
+    module_invoke_all("wh_petitions_petition_inappropriate", $petition_id);
 
   }
 

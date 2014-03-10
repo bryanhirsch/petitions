@@ -34,18 +34,8 @@ function wh_petitions_close_petitions() {
         array('_id' => $res['_id']), 
         array('$set' => array('petition_status' => (int)WH_PETITION_STATUS_CLOSED, 'closed' => (int)time()))
       );
-      
-      //MongoDB/MySQL conversion.
-      $save_to_mysql = variable_get('wh_petitions_mysql_toggle', 0);
-      if($save_to_mysql){
-        $node = petition_load_from_legacy_id($res['_id']);
-        if($node){
-          $node->field_petition_status[LANGUAGE_NONE][0]['value'] = WH_PETITION_STATUS_CLOSED;
-          // We are not saving the time of closing.
-          node_save($node);
-        }
-      }
-      //MongoDB/MySQL conversion.
+
+      module_invoke_all("wh_petitions_petition_close", $res);
     }
   }
 

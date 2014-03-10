@@ -74,24 +74,27 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     $user = _signatures_queue_process_signatures_create_user($item);
 
     // Get signature_id, if this user has already signed.
+    // @TODO the agnostic signature queue should not be calling functions from
+    // wh_petitions.
     $item['signature_id'] = wh_petitions_get_signature_id($item['petition_id'], $user->uid);
 
     // If this is a new signature...
     if (!$item['signature_id']) {
-      // Create new record in petition_signatures.
-      $item['signature_id'] = _signatures_queue_process_signatures_create_record($item, $user);
-      // Increment signature count if this is a new signature.
-      wh_petitions_increment_count($item['petition_id']);
+
+      // Allow other modules to save the processed signature, and to increment
+      // the peition count in whatever form the see fit.
+      drupal_alter("signtures_queue_signature_post_process", $item, $user);
     }
 
-    // Invoke hook_save_signature. @@?
-    // module_invoke_all('save_signature', $item);
+    // If no one took the responsability to save a new signature, we can not
+    // count it as being properly processed.
+    if (array_key_exists('signature_id', $item)) {
+      // Add signature ID and API key to signatures_validations table.
+      _signatures_queue_process_signatures_add_to_signatures_validations($item);
 
-    // Add signature ID and API key to signatures_validations table.
-    _signatures_queue_process_signatures_add_to_signatures_validations($item);
-
-    // Move item to processed tables and delete from pre-process tables.
-    _signatures_queue_process_signatures_move_to_processed($item);
+      // Move item to processed tables and delete from pre-process tables.
+      _signatures_queue_process_signatures_move_to_processed($item);
+    }
 
     // Subscribe to list if requested.
     // Turned off until further review...
@@ -222,29 +225,6 @@ function _signatures_queue_process_signatures_create_user($item) {
 }
 
 /**
- * Create signature record.
- *
- * If a signature record with this email does not exist in petition_signatures
- * create one, and get the signature id.
- *
- * Then signature_count module increments the cached signature count. @@?
- *
- * @param string $item
- *   The item from the database query.
- * @param object $user
- *   Drupal user object for checking petition_signatures.
- *
- * @return string $signature_id
- */
-function _signatures_queue_process_signatures_create_record($item, $user) {
-  // The wh_petitions_create_signature function called by
-  // wh_petitions_create_new_signature determines if this user has already signed the petition.
-  $signature_id = wh_petitions_create_new_signature($item['petition_id'], $user, $item['client_ip']);
-
-  return $signature_id;
-}
-
-/**
  * Add record to signature_validations table.
  *
  * Add signature ID and API key to signature_validations table. (Note: Possible
@@ -357,4 +337,3 @@ function _signatures_queue_process_signatures_list_subscribe($item) {
     govdelivery_subscriber_api_add_subscriber($user->mail, $topic_title, $topic_id);
   }
 }
-

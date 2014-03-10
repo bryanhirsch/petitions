@@ -130,3 +130,35 @@ function signature_mail_config_form_submit() {
   // TODO implement a more targeted flushing.
   drupal_flush_all_caches();
 }
+
+/**
+ * Implements hook_signtures_queue_signature_post_process_alter().
+ */
+function signature_mail_signtures_queue_signature_post_process_alter(&$item, $user) {
+
+  print_r($user);
+
+  if (!(module_exists('simple_toggle') && simple_toggle_state("signature_mail", 'save_signature_mysql'))) {
+    return;
+  }
+  // Let's save the processed signature to mysql.
+  module_load_include("inc", "signature_mail", "signature_mail.mongo2mysql");
+  // @TODO the signatures_queue module expects an id to be set for things to
+  // continue processing, if we toggle mongo off, we need to take responsability
+  // for setting the id.
+  signature_mail_mongodb_save($item);
+}
+
+/**
+ * Implements hook_simple_toggle_info().
+ */
+function signature_mail_simple_toggle_info() {
+  $toggles = array();
+
+  $toggles['signature_mail']['save_signature_mysql'] = array(
+    'title' => "Save Signatures to MySQL",
+    'default_state' => 0,
+  );
+
+  return $toggles;
+}

@@ -1,0 +1,97 @@
+<?php
+/**
+ * @file
+ * This module allows for the easy definition of simple toggles
+ * (TRUE/FALSE switches), some functions to access the information, and a UI
+ * for changing the values of the toggles.
+ */
+
+/**
+ * Get toggle definitions from other modules.
+ */
+function simple_toggle_get_info() {
+  $info = module_invoke_all("simple_toggle_info");
+  return $info;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function simple_toggle_menu() {
+  $items['admin/config/system/simple_toggles'] = array(
+    'title' => 'Functionality Toggles',
+    'description' => 'Toggles or switches to activate or deactivate functionality',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('simple_toggles'),
+    'access arguments' => array('use simple toggles'),
+    'weight' => -10,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function simple_toggle_permission() {
+  return array(
+    'use simple toggles' => array(
+      'title' => t('Functionality Toggles'),
+      'description' => t('Activate/deactivate functionality wrapped by simple toggles.'),
+    ),
+  );
+}
+
+/**
+ * User interface to activate/deactivate toggles.
+ */
+function simple_toggles() {
+
+  $info = simple_toggle_get_info();
+
+  foreach ($info as $module => $toggles) {
+    $form[$module] = array(
+      '#type' => 'fieldset',
+      '#title' => $module,
+    );
+    foreach ($toggles as $name => $more) {
+      $toggle_name = "{$module}_{$name}";
+      $form[$module][$toggle_name] = array(
+        '#type' => 'checkbox',
+        '#title' => t($more['title']),
+        '#default_value' => variable_get($toggle_name, $more['default_state']),
+      );
+    }
+  }
+
+  return system_settings_form($form, FALSE);
+}
+
+/**
+ * Find the state of a toggle.
+ *
+ * @param string $module
+ *   the module that provided the toggle.
+ * @param string $name
+ *   the name of the toggle.
+ *
+ * @return bool
+ *   Whether the toggle is on of off
+ */
+function simple_toggle_state($module, $name) {
+  $info = simple_toggle_get_info();
+
+  if (array_key_exists($module, $info)) {
+    if (array_key_exists($name, $info[$module])) {
+      $toggle_name = "{$module}_{$name}";
+      return variable_get($toggle_name, $info[$module][$name]['default_state']);
+    }
+    else {
+      throw new Exception("A toggle {$name} has not been defined for module {$module}.");
+    }
+  }
+  else {
+    throw new Exception("Module {$module} has not defined any toggles.");
+  }
+}
