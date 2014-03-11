@@ -81,20 +81,31 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     // If this is a new signature...
     if (!$item['signature_id']) {
 
-      // Allow other modules to save the processed signature, and to increment
+      // Allow other modules to save the signature, and to increment
       // the peition count in whatever form the see fit.
-      drupal_alter("signtures_queue_signature_post_process", $item, $user);
+      // 
+      // @todo This and the post hooks can be removed after our dependency to
+      // mongo is eliminated. Also code that saves the signature entity to
+      // mysql will be added here.
+      $signature_ids = module_invoke_all("signtures_queue_signature_process", $item, $user);
+
+      if(!empty($signature_ids)){
+        $signature_id = array_shift($signature_ids);
+        if(!empty($signature_id)){
+          $item['signature_id'] = $signature_id;
+
+          // If the signature was saved correctly we can let other know.
+          module_invoke_all("signtures_queue_signature_post_process", $item, $user);
+        }
+      }
     }
 
-    // If no one took the responsability to save a new signature, we can not
-    // count it as being properly processed.
-    if (array_key_exists('signature_id', $item)) {
-      // Add signature ID and API key to signatures_validations table.
-      _signatures_queue_process_signatures_add_to_signatures_validations($item);
+    // Add signature ID and API key to signatures_validations table.
+    _signatures_queue_process_signatures_add_to_signatures_validations($item);
 
-      // Move item to processed tables and delete from pre-process tables.
-      _signatures_queue_process_signatures_move_to_processed($item);
-    }
+    // Move item to processed tables and delete from pre-process tables.
+    _signatures_queue_process_signatures_move_to_processed($item);
+    
 
     // Subscribe to list if requested.
     // Turned off until further review...

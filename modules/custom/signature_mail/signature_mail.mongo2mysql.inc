@@ -2,6 +2,8 @@
 /**
  * @file
  * Separete anything related to our MongoDB to MySQL transition.
+ *
+ * @todo This will likely be removed once mongo support is no longer needed.
  */
 
 /**
@@ -10,7 +12,7 @@
  * @param array $mongodb_signature
  *   An array of data as it is structure when loaded from MongoDB.
  */
-function signature_mail_mongodb_save($mongodb_signature) {
+function signature_mail_mongo2mysql_save($mongodb_signature) {
   // Turn signature_id into the legacy_id.
   if (array_key_exists('signature_id', $mongodb_signature)) {
     $_id = $mongodb_signature['signature_id'];

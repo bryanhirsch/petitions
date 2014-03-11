@@ -1942,18 +1942,23 @@ function wh_petitions_increment_signature_count(&$petition, $connection = FALSE)
 /**
  * Implements hook_signtures_queue_signature_post_process().
  */
-function wh_petitions_signtures_queue_signature_post_process_alter(&$item, $user){
+function wh_petitions_signtures_queue_signature_process($item, $user){
 
   // The wh_petitions_create_signature function called by
   // wh_petitions_create_new_signature determines if this user has already signed the petition.
   $signature_id = wh_petitions_create_new_signature($item['petition_id'], $user, $item['client_ip']);
 
-  $item['signature_id'] = $signature_id;
+  return $signature_id;
 }
 
 function wh_petitions_simple_toggle_info(){
   $toggles = array();
 
+  // This toggle will stop both mongo and mysql petition creation.
+  // It overrides the toggles defined by petition and signature mail.
+  // Once we separate the mongo code from the current petition creation form,
+  // or if we create a v2 version of the form, this "incorrect" behavior will
+  // be eliminated.
   $toggles['wh_petitions']['deactivate_petition_creation'] =
   array(
     'title' => "Deactivate petition creation",

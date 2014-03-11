@@ -3,8 +3,7 @@
  * @file
  * Functions specific to the mongo implementation of the Petiton module.
  *
- * @todo
- *   This will likely be removed once mongo support is no longer needed.
+ * @todo This will likely be removed once mongo support is no longer needed.
  */
 
 
@@ -15,7 +14,7 @@
  *   The mongo petition array containing all the values loaded from mongoDB
  *   petition.
  */
-function petition_mongodb_save($mongodb_petition) {
+function petition_mongo2mysql_save($mongodb_petition) {
   // Lets make the _id plain to make our life easier.
   $mongodb_petition['id'] = $mongodb_petition['_id']->__toString();
 

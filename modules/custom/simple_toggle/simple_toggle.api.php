@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Hooks provided by Simple Togle.
+ * Hooks provided by Simple Toggle.
  */
 
 /**

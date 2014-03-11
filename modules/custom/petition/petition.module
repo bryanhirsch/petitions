@@ -107,6 +107,8 @@ function petition_node_info() {
 
 /**
  * Implements hook_wh_petitions_petition_save().
+ *
+ * @todo Can be removed after wh_petitions is disabled.
  */
 function petition_wh_petitions_petition_save($petition) {
 
@@ -115,11 +117,13 @@ function petition_wh_petitions_petition_save($petition) {
   }
 
   module_load_include("inc", "petition", "includes/petition.mongo2mysql");
-  petition_mongodb_save($petition);
+  petition_mongo2mysql_save($petition);
 }
 
 /**
  * Implements hook_wh_petitions_petition_close().
+ *
+ * @todo Can be removed after wh_petitions is disabled.
  */
 function petition_wh_petitions_petition_close($petition) {
 
@@ -137,6 +141,8 @@ function petition_wh_petitions_petition_close($petition) {
 
 /**
  * Implements hook_wh_petitions_petition_body_update().
+ *
+ * @todo Can be removed after wh_petitions is disabled.
  */
 function petition_wh_petitions_petition_body_update($petition_id, $body) {
 
@@ -153,6 +159,8 @@ function petition_wh_petitions_petition_body_update($petition_id, $body) {
 
 /**
  * Implements hook_wh_petitions_petition_inappropriate().
+ *
+ * @todo Can be removed after wh_petitions is disabled.
  */
 function petition_wh_petitions_petition_inappropriate($petition_id) {
 
