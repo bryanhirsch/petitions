@@ -6,3 +6,4 @@ files[] = signature_mail.mongo2mysql.inc
 
 dependencies[] = signature
 
+dependencies[] = shunt

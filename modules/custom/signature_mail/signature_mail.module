@@ -138,7 +138,7 @@ function signature_mail_config_form_submit() {
  */
 function signature_mail_signtures_queue_signature_post_process($item, $user) {
 
-  if (!(module_exists('simple_toggle') && simple_toggle_state("signature_mail", 'save_signature_mysql'))) {
+  if (shunt_is_enabled('signature_mail_mysql_save')) {
     return;
   }
   // Let's save the processed signature to mysql.
@@ -147,15 +147,10 @@ function signature_mail_signtures_queue_signature_post_process($item, $user) {
 }
 
 /**
- * Implements hook_simple_toggle_info().
+ * Implements hook_shunt().
  */
-function signature_mail_simple_toggle_info() {
-  $toggles = array();
-
-  $toggles['signature_mail']['save_signature_mysql'] = array(
-    'title' => "Save Signatures to MySQL",
-    'default_state' => 0,
+function signature_mail_shunt() {
+  return array(
+    'signature_mail_mysql_save' => t('Disable signature writes to MySQL.'),
   );
-
-  return $toggles;
 }
