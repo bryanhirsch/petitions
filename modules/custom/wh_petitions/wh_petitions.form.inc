@@ -330,10 +330,8 @@ function wh_petitions_create_petition_step_1_validate($form, &$form_state) {
  */
 function wh_petitions_create_petition_step_1_submit($form, &$form_state) {
 
-  // If the simple toggle module is active, and the deactivate petition creation
-  // toggle has been set, we don't need to do anything.
-  if(module_exists('simple_toggle') &&
-          simple_toggle_state("wh_petitions", 'deactivate_petition_creation')){
+  // If the shunt on petition creation is active, we don't need to do anything.
+  if (shunt_is_enabled('wh_petitions_petition_create')) {
     return;
   }
 

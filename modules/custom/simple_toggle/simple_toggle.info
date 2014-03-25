@@ -1,3 +1,0 @@
-name = "Simple Toggle"
-description = "API for defining and querying the state of toggles or switches, and an interface for toggling"
-core = 7.x

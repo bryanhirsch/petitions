@@ -1951,19 +1951,17 @@ function wh_petitions_signtures_queue_signature_process($item, $user){
   return $signature_id;
 }
 
-function wh_petitions_simple_toggle_info(){
-  $toggles = array();
-
-  // This toggle will stop both mongo and mysql petition creation.
-  // It overrides the toggles defined by petition and signature mail.
+/**
+ * Implements hook_shunt().
+ */
+function wh_petitions_shunt(){
+  // This shunt will stop both mongo and mysql petition creation via the form.
+  // It overrides the shunts defined by petition and signature mail.
   // Once we separate the mongo code from the current petition creation form,
   // or if we create a v2 version of the form, this "incorrect" behavior will
-  // be eliminated.
-  $toggles['wh_petitions']['deactivate_petition_creation'] =
-  array(
-    'title' => "Deactivate petition creation",
-    'default_state' => 0,
+  // be eliminated and this toggle will only disable creation of petitions in
+  // MongoDB.
+  return array(
+    'wh_petitions_petition_create' => t('Disable creation of new petitions when /petition/create is submitted.'),
   );
-
-  return $toggles;
 }
