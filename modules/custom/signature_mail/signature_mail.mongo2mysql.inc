@@ -1,9 +1,10 @@
 <?php
+
 /**
  * @file
- * Separete anything related to our MongoDB to MySQL transition.
+ * Separate anything related to our MongoDB to MySQL transition.
  *
- * @todo This will likely be removed once mongo support is no longer needed.
+ * @todo This will be removed once mongo support is no longer needed.
  */
 
 /**
@@ -50,7 +51,7 @@ function signature_mail_mongo2mysql_save($mongodb_signature) {
   foreach ($schema['fields'] as $property => $info) {
     if (empty($mongodb_signature[$property])) {
       if ($property != 'id' && ($info['type'] == 'text' ||
-              $info['type'] == "varchar")) {
+        $info['type'] == "varchar")) {
         $mongodb_signature[$property] = "";
       }
       elseif ($property != 'id' && $info['type'] == 'int') {
@@ -61,4 +62,24 @@ function signature_mail_mongo2mysql_save($mongodb_signature) {
 
   $signature = entity_create("signature_mail", $mongodb_signature);
   $signature->save();
+}
+
+/**
+ * Implements hook_signtures_queue_signature_post_process_alter().
+ */
+function signature_mail_signtures_queue_signature_post_process($item, $user) {
+  if (shunt_is_enabled('signature_mail_mysql_save')) {
+    return;
+  }
+
+  signature_mail_mongo2mysql_save($item);
+}
+
+/**
+ * Implements hook_shunt().
+ */
+function signature_mail_shunt() {
+  return array(
+    'signature_mail_mysql_save' => t('Disable signature writes to MySQL.'),
+  );
 }

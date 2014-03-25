@@ -4,6 +4,10 @@
  * Definition of the signature mail entity, and some helper functions.
  */
 
+// Load file containing functions relating to MongoDB to MySQL migration.
+// @todo Remove this line and associated file once MongoDB is depreciated.
+module_load_include("inc", "signature_mail", "signature_mail.mongo2mysql");
+
 /**
  * Implements hook_signature_info().
  */
@@ -129,28 +133,4 @@ function signature_mail_configuration_page($form, &$form_state) {
 function signature_mail_config_form_submit() {
   // @todo implement a more targeted flushing.
   drupal_flush_all_caches();
-}
-
-/**
- * Implements hook_signtures_queue_signature_post_process_alter().
- *
- * @todo Remove once mongo support is no longer needed.
- */
-function signature_mail_signtures_queue_signature_post_process($item, $user) {
-
-  if (shunt_is_enabled('signature_mail_mysql_save')) {
-    return;
-  }
-  // Let's save the processed signature to mysql.
-  module_load_include("inc", "signature_mail", "signature_mail.mongo2mysql");
-  signature_mail_mongo2mysql_save($item);
-}
-
-/**
- * Implements hook_shunt().
- */
-function signature_mail_shunt() {
-  return array(
-    'signature_mail_mysql_save' => t('Disable signature writes to MySQL.'),
-  );
 }
