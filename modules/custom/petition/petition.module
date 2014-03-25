@@ -112,7 +112,7 @@ function petition_node_info() {
  */
 function petition_wh_petitions_petition_save($petition) {
 
-  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+  if (shunt_is_enabled('petition_mysql_save')) {
     return;
   }
 
@@ -127,7 +127,7 @@ function petition_wh_petitions_petition_save($petition) {
  */
 function petition_wh_petitions_petition_close($petition) {
 
-  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+  if (shunt_is_enabled('petition_mysql_save')) {
     return;
   }
 
@@ -146,7 +146,7 @@ function petition_wh_petitions_petition_close($petition) {
  */
 function petition_wh_petitions_petition_body_update($petition_id, $body) {
 
-  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+  if (shunt_is_enabled('petition_mysql_save')) {
     return;
   }
 
@@ -164,7 +164,7 @@ function petition_wh_petitions_petition_body_update($petition_id, $body) {
  */
 function petition_wh_petitions_petition_inappropriate($petition_id) {
 
-  if (!(module_exists('simple_toggle') && simple_toggle_state("petition", 'save_petition_mysql'))) {
+  if (shunt_is_enabled('petition_mysql_save')) {
     return;
   }
 
@@ -193,15 +193,10 @@ function petition_wh_petitions_petition_inappropriate($petition_id) {
 }
 
 /**
- * Implements hook_simple_toggle_info().
+ * Implements hook_shunt().
  */
-function petition_simple_toggle_info() {
-  $toggles = array();
-
-  $toggles['petition']['save_petition_mysql'] = array(
-    'title' => "Save Petitions to MySQL",
-    'default_state' => 0,
+function petition_shunt() {
+  return array(
+    'petition_mysql_save' => t('Disable petition writes to MySQL.'),
   );
-
-  return $toggles;
 }
