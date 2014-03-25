@@ -331,6 +331,7 @@ function wh_petitions_create_petition_step_1_validate($form, &$form_state) {
 function wh_petitions_create_petition_step_1_submit($form, &$form_state) {
 
   // If the shunt on petition creation is active, we don't need to do anything.
+  // See wh_petitions_shunt() for details.
   if (shunt_is_enabled('wh_petitions_petition_create')) {
     return;
   }

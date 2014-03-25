@@ -73,30 +73,30 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     // Create user if a user with this email does not exist yet.
     $user = _signatures_queue_process_signatures_create_user($item);
 
-    // Get signature_id, if this user has already signed.
-    // @TODO the agnostic signature queue should not be calling functions from
-    // wh_petitions.
-    $item['signature_id'] = wh_petitions_get_signature_id($item['petition_id'], $user->uid);
+    // Confirm wh_petitions module is enabled before calling it's functions.
+    // Only save signatures into mongodb if that shunt is not tripped, see
+    // wh_petitions_shunt() for further details.
+    if (module_exists('wh_petitions') && shunt_is_disabled('wh_petitions_signature_create')) {
+      // Get signature_id, if this user has already signed.
+      $item['signature_id'] = wh_petitions_get_signature_id($item['petition_id'], $user->uid);
 
-    // If this is a new signature...
-    if (!$item['signature_id']) {
-
-      // Allow other modules to save the signature, and to increment
-      // the peition count in whatever form the see fit.
-      // @todo This and the post hooks can be removed after our dependency to
-      // mongo is eliminated. Also code that saves the signature entity to
-      // mysql will be added here.
-      $signature_ids = module_invoke_all("signtures_queue_signature_process", $item, $user);
-
-      if (!empty($signature_ids)) {
-        $signature_id = array_shift($signature_ids);
-        if (!empty($signature_id)) {
-          $item['signature_id'] = $signature_id;
-
-          // If the signature was saved correctly we can let other modules know.
-          module_invoke_all("signtures_queue_signature_post_process", $item, $user);
-        }
+      // If this is a new signature...
+      if (!$item['signature_id']) {
+        // Create new record in petition_signatures.
+        $item['signature_id'] = _signatures_queue_process_signatures_create_record($item, $user);
+        // Increment signature count if this is a new signature.
+        wh_petitions_increment_count($item['petition_id']);
       }
+    }
+
+    // Also save siganture into MySQL if the shunt is not tripped. Note that
+    // the interim mongo2mysql function needs an existing signature_id, so we
+    // check for that also.
+    // @todo: Once MongoDB has been disabled, refactor the $item data structure
+    // to create and populate a signature object, then call $signature->save.
+    // This will replace the interim mongo2mysql wrapper below.
+    if (shunt_is_disabled('signature_mail_mysql_save') && !empty($item['signature_id'])) {
+      signature_mail_mongo2mysql_save($item);
     }
 
     // Add signature ID and API key to signatures_validations table.

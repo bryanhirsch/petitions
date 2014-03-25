@@ -65,17 +65,6 @@ function signature_mail_mongo2mysql_save($mongodb_signature) {
 }
 
 /**
- * Implements hook_signtures_queue_signature_post_process_alter().
- */
-function signature_mail_signtures_queue_signature_post_process($item, $user) {
-  if (shunt_is_enabled('signature_mail_mysql_save')) {
-    return;
-  }
-
-  signature_mail_mongo2mysql_save($item);
-}
-
-/**
  * Implements hook_shunt().
  */
 function signature_mail_shunt() {

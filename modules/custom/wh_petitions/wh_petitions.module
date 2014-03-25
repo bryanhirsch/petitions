@@ -1942,28 +1942,25 @@ function wh_petitions_increment_signature_count(&$petition, $connection = FALSE)
 }
 
 /**
- * Implements hook_signtures_queue_signature_post_process().
- */
-function wh_petitions_signtures_queue_signature_process($item, $user){
-
-  // The wh_petitions_create_signature function called by
-  // wh_petitions_create_new_signature determines if this user has already signed the petition.
-  $signature_id = wh_petitions_create_new_signature($item['petition_id'], $user, $item['client_ip']);
-
-  return $signature_id;
-}
-
-/**
  * Implements hook_shunt().
  */
-function wh_petitions_shunt(){
+function wh_petitions_shunt() {
+  $shunts = array();
+ 
   // This shunt will stop both mongo and mysql petition creation via the form.
   // It overrides the shunts defined by petition and signature mail.
   // Once we separate the mongo code from the current petition creation form,
   // or if we create a v2 version of the form, this "incorrect" behavior will
   // be eliminated and this toggle will only disable creation of petitions in
   // MongoDB.
-  return array(
-    'wh_petitions_petition_create' => t('Disable creation of new petitions when /petition/create is submitted.'),
-  );
+  $shunts['wh_petitions_petition_create'] = t('Disable creation of new petitions when /petition/create is submitted.');
+
+  // This shunt will stop mongo signature creation. Whilst the mysql signature
+  // creation logic depends on a mongo signature ID, it will stop mysql
+  // signature creation also. It only works for signatures created through the
+  // API, so will not work for the signature form until that is converted to
+  // pass through the API.
+  $shunts['wh_petitions_signature_create'] = t('Disable creation of new signatures by the signature write API.');
+
+  return $shunts;
 }
