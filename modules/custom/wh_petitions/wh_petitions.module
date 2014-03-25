@@ -2,6 +2,8 @@
 /**
  * @file
  * Management and utility for white house petitions.
+ *
+ * WARNING: THIS MODULE IS GOING TO BE REMOVED BEFORE 7.x-3.0.
  */
 
 /**
