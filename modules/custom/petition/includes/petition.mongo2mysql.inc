@@ -154,3 +154,91 @@ function _petition_set_field($node, $raw_data, $info, $key) {
     }
   }
 }
+
+/**
+ * Implements hook_wh_petitions_petition_save().
+ */
+function petition_wh_petitions_petition_save($petition) {
+
+  if (shunt_is_enabled('petition_mysql_save')) {
+    return;
+  }
+
+  module_load_include("inc", "petition", "includes/petition.mongo2mysql");
+  petition_mongo2mysql_save($petition);
+}
+
+/**
+ * Implements hook_wh_petitions_petition_close().
+ */
+function petition_wh_petitions_petition_close($petition) {
+
+  if (shunt_is_enabled('petition_mysql_save')) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition['_id']);
+  if ($node) {
+    $node->field_petition_status[LANGUAGE_NONE][0]['value'] = WH_PETITION_STATUS_CLOSED;
+    // We are not saving the time of closing.
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_wh_petitions_petition_body_update().
+ */
+function petition_wh_petitions_petition_body_update($petition_id, $body) {
+
+  if (shunt_is_enabled('petition_mysql_save')) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition_id);
+  if ($node) {
+    $node->body[LANGUAGE_NONE][0]['value'] = $body;
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_wh_petitions_petition_inappropriate().
+ */
+function petition_wh_petitions_petition_inappropriate($petition_id) {
+
+  if (shunt_is_enabled('petition_mysql_save')) {
+    return;
+  }
+
+  $node = petition_load_from_legacy_id($petition_id);
+
+  if ($node) {
+    $items = field_get_items("node", $node, "field_abuse_count");
+    if ($items) {
+      $node->field_abuse_count[LANGUAGE_NONE][0]['value']++;
+    }
+    else {
+      $node->field_abuse_count[LANGUAGE_NONE][0]['value'] = 0;
+    }
+
+    $items = field_get_items("node", $node, "field_abuse_flags");
+
+    if ($items) {
+      $node->field_abuse_flags[LANGUAGE_NONE][]['target_id'] = $user->uid;
+    }
+    else {
+      $node->field_abuse_flags[LANGUAGE_NONE][0]['target_id'] = $user->uid;
+    }
+
+    node_save($node);
+  }
+}
+
+/**
+ * Implements hook_shunt().
+ */
+function petition_shunt() {
+  return array(
+    'petition_mysql_save' => t('Disable petition writes to MySQL.'),
+  );
+}
