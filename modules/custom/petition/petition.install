@@ -10,6 +10,9 @@
 function petition_enable() {
   $t = get_t();
   drupal_set_message($message = $t('The Petition  module was successfully enabled.'), $type = 'status');
+  // Start MySQL writes off disabled.
+  // @todo: remove this once MongoDB is removed.
+  shunt_enable_shunt('petition_mysql_save');
 }
 
 /**
