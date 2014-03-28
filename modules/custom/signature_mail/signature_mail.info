@@ -2,8 +2,5 @@ name = Signature Mail
 description = An entity type to store signatures
 core = 7.x
 
-files[] = signature_mail.mongo2mysql.inc
-
 dependencies[] = signature
-
 dependencies[] = shunt

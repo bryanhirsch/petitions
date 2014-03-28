@@ -6,7 +6,7 @@
 
 // Load file containing functions relating to MongoDB to MySQL migration.
 // @todo Remove this line and associated file once MongoDB is depreciated.
-require_once 'includes/signature_mail.mongo2mysql.inc';
+include_once 'signature_mail.mongo2mysql.inc';
 
 /**
  * Implements hook_signature_info().
