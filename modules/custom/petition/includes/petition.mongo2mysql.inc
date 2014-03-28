@@ -164,7 +164,6 @@ function petition_wh_petitions_petition_save($petition) {
     return;
   }
 
-  module_load_include("inc", "petition", "includes/petition.mongo2mysql");
   petition_mongo2mysql_save($petition);
 }
 
