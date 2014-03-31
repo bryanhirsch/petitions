@@ -4,6 +4,7 @@
  * Functions specific to the mongo implementation of the Petiton module.
  *
  * @todo This will likely be removed once mongo support is no longer needed.
+ *   Be sure to strip out shunt default setting in petition.install
  */
 
 

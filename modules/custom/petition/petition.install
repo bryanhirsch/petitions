@@ -35,6 +35,11 @@ function petition_install() {
   petition_build_fields(petition_fields());
   $t = get_t();
   drupal_set_message($message = $t('The Petition module has been installed and a Petition content type has been created.'), $type = 'status');
+
+  // Set the initial state of MySQL shunt to disable mysql writes.
+  // @todo This default setting should be removed when mongo is fully removed.
+  shunt_enable_shunt('petition_mysql_save');
+
 }
 
 
