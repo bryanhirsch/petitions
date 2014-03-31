@@ -2,14 +2,18 @@
 
 /**
  * @file
- * Install file for the signature_mail module.
+ * Items to execute on instalation of signature_mail.
  */
 
+// @todo Remove after 7.x-3.0 is released and mongo dependency is removed.
+require_once 'signature_mail.mongo2mysql.inc ';
+
 /**
- * Implements hook_enable().
+ * Implements hook_install().
  */
-function signature_mail_enable() {
-  // Start MySQL writes off disabled.
-  // @todo: remove this once MongoDB is removed.
-  shunt_enable_shunt('signature_mail_mysql_save');
+function signature_mail_install() {
+  // @todo This can be removed after 7.x-3.0 release.
+  if (function_exists('signature_mail_disable_mysql')) {
+    signature_mail_disable_mysql();
+  }
 }

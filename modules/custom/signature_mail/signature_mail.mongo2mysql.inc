@@ -5,6 +5,7 @@
  * Separate anything related to our MongoDB to MySQL transition.
  *
  * @todo This will be removed once mongo support is no longer needed.
+ *   Remove shunt enabling from signature_mail.install when Mongo is removed.
  */
 
 /**
