@@ -5,9 +5,9 @@
  *
  * Signature processing includes these steps:
  *  - Match records from validations to signatures_pending_validation tables.
- *  - If signature (email address) does not have a corresponding user, create one.
- *  - If a signature record with this email does not exist in petition_signatures
- *    create one, and get the signature id.
+ *  - If signature (email address) does not have corresponding user, create one.
+ *  - If a signature record with this email does not exist in
+ *    petition_signatures, create one, and get the signature id.
  */
 
 /**
@@ -74,7 +74,7 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     $user = _signatures_queue_process_signatures_create_user($item);
 
     // Confirm wh_petitions module is enabled before calling it's functions.
-    // Only save signatures into mongodb if that shunt is not tripped, see
+    // Only save signatures into mongodb if that shunt is not enabled, see
     // wh_petitions_shunt() for further details.
     if (module_exists('wh_petitions') && shunt_is_disabled('wh_petitions_signature_create')) {
       // Get signature_id, if this user has already signed.
@@ -89,7 +89,7 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
       }
     }
 
-    // Also save siganture into MySQL if the shunt is not tripped. Note that
+    // Also save signature into MySQL if the shunt is not enabled. Note that
     // the interim mongo2mysql function needs an existing signature_id, so we
     // check for that also.
     // @todo: Once MongoDB has been disabled, refactor the $item data structure
@@ -108,7 +108,6 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     // Subscribe to list if requested.
     // Turned off until further review...
     // _signatures_queue_process_signatures_list_subscribe($item);
-
     $count++;
   }
 
