@@ -76,7 +76,7 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     // Confirm wh_petitions module is enabled before calling it's functions.
     // Only save signatures into mongodb if that shunt is not enabled, see
     // wh_petitions_shunt() for further details.
-    if (module_exists('wh_petitions') && shunt_is_disabled('wh_petitions_signature_create')) {
+    if (module_exists('wh_petitions') && !shunt_is_enabled('wh_petitions_signature_create')) {
       // Get signature_id, if this user has already signed.
       $item['signature_id'] = wh_petitions_get_signature_id($item['petition_id'], $user->uid);
 
@@ -95,7 +95,7 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     // @todo: Once MongoDB has been disabled, refactor the $item data structure
     // to create and populate a signature object, then call $signature->save.
     // This will replace the interim mongo2mysql wrapper below.
-    if (shunt_is_disabled('signature_mail_mysql_save') && !empty($item['signature_id'])) {
+    if (!shunt_is_enabled('signature_mail_mysql_save') && !empty($item['signature_id'])) {
       signature_mail_mongo2mysql_save($item);
     }
 
@@ -230,6 +230,31 @@ function _signatures_queue_process_signatures_create_user($item) {
   }
 
   return $new_user;
+}
+
+/**
+ * Create signature record.
+ *
+ * If a signature record with this email does not exist in petition_signatures
+ * create one, and get the signature id.
+ *
+ * Then signature_count module increments the cached signature count. @@?
+ *
+ * @param string $item
+ *   The item from the database query.
+ * @param object $user
+ *   Drupal user object for checking petition_signatures.
+ *
+ * @return string
+ *   $signature_id The ID of the signature created
+ */
+function _signatures_queue_process_signatures_create_record($item, $user) {
+  // The wh_petitions_create_signature function called by
+  // wh_petitions_create_new_signature determines if this user has already
+  // signed the petition.
+  $signature_id = wh_petitions_create_new_signature($item['petition_id'], $user, $item['client_ip']);
+
+  return $signature_id;
 }
 
 /**
