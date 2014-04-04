@@ -73,3 +73,12 @@ function signature_mail_shunt() {
     'signature_mail_mysql_save' => t('Disable signature writes to MySQL.'),
   );
 }
+
+/**
+ * Disable mysql. (This uses a shunt trip that turns off access to mysql.)
+ */
+function signature_mail_disable_mysql() {
+  // Set the initial state of MySQL shunt to disable mysql writes.
+  // @todo This default setting should be removed when mongo is fully removed.
+  shunt_enable_shunt('signature_mail_mysql_save');
+}

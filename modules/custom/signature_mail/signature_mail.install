@@ -6,7 +6,7 @@
  */
 
 // @todo Remove after 7.x-3.0 is released and mongo dependency is removed.
-require_once 'signature_mail.mongo2mysql.inc ';
+require_once 'signature_mail.mongo2mysql.inc';
 
 /**
  * Implements hook_install().
