@@ -25,7 +25,7 @@ projects[conditional_styles][version] = 2.1
 
 projects[context][version] = 3.1
 
-projects[ctools][version] = 1.3
+projects[ctools][version] = 1.4
 
 projects[date][version] = 2.6
 
@@ -71,6 +71,11 @@ projects[openidadmin][version] = 1.0
 
 projects[pathauto][version] = 1.2
 
+projects[petitionssignatureform][type] = module
+projects[petitionssignatureform][download][type] = git
+projects[petitionssignatureform][download][url] = http://git.drupal.org/sandbox/TravisCarden/2283171.git
+projects[petitionssignatureform][download][revision] = 212fb88e21a0deabd7a6831be6a8913b3d8fc554
+
 projects[profile2][version] = 1.3
 
 projects[recaptcha][version] = 1.10
@@ -80,6 +85,8 @@ projects[recaptcha][version] = 1.10
 ; The latest security release is 2.3 so we can update to that for now:
 ; https://drupal.org/node/1954592
 projects[rules][version] = 2.3
+
+projects[services][version] = 3.7
 
 projects[services_documentation][version] = 1.3
 
@@ -125,10 +132,13 @@ projects[migrate][patch][] = https://drupal.org/files/migrate-mongodb-source-189
 ;   - @see http://drupal.org/node/1165126#comment-5492890
 ;
 
+projects[textcaptcha][version] = 1.3
 ; textcaptcha-cron_default-2144807-1.patch
 ;   - Sets the textcaptcha_cron variable to 0 by default.
-projects[textcaptcha][version] = 1.3
-projects[textcaptcha][patch][] = https://drupal.org/files/issues/textcaptcha-cron_default-2144807-1.patch
+projects[textcaptcha][patch][2144807-1] = https://drupal.org/files/issues/textcaptcha-cron_default-2144807-1.patch
+; textcatpcha-query-optimizations-2279207-1.patch
+;   - Optimizes question fetching queries.
+projects[textcaptcha][patch][2279207-1] = https://drupal.org/files/issues/textcatpcha-query-optimizations-2279207-1.patch
 
 ; zen-include_error-2144803-1.patch
 ;   - Fixes Simpletest error.
@@ -156,12 +166,6 @@ projects[nagios][version] = 1.1
 projects[nagios][patch][] = http://drupal.org/files/check_type.patch
 projects[nagios][patch][] = http://drupal.org/files/check_checks.patch
 
-; services-1937312-format-arguments-errors-reroll-8.patch
-;  - Fixes WSOD when missing required arguments.
-;  - @see https://drupal.org/node/1937312
-projects[services][version] = 3.5
-projects[services][patch][] = http://drupal.org/files/services-1937312-format-arguments-errors-reroll-8.patch
-
 ; Contrib themes
 ; -----------------
 projects[tao][type] = theme
@@ -172,19 +176,25 @@ projects[rubik][type] = theme
 projects[rubik][subdir] = ""
 projects[rubik][version] = 4.0-beta9
 
-; 5ba70aaf95bf646211cc1d3086074885914c37cf
-;  - Fixes coding standards violations, including a PHP short tag that causes
-;    problems for simpletest.
 projects[fortyfour][type] = theme
 projects[fortyfour][subdir] = ""
-projects[fortyfour][version] = 1.0-alpha7
-projects[fortyfour][patch][] = http://drupalcode.org/project/fortyfour.git/patch/5ba70aaf95bf646211cc1d3086074885914c37cf
+projects[fortyfour][version] = 1.0-alpha8
 
 ; External libraries
 ; -----------------
 
 libraries[colorbox][download][type] = "file"
 libraries[colorbox][download][url] = "https://github.com/jackmoore/colorbox/archive/1.4.27.zip"
+
+libraries[petitions-php-sdk][download][type] = git
+libraries[petitions-php-sdk][download][url] = http://git.drupal.org/sandbox/TravisCarden/2283175.git
+libraries[petitions-php-sdk][download][revision] = fe03d49e39e88e87cff2295172d02a8a22c94910
+
+; Required by Services module for REST server.
+libraries[spyc][download][type] = "file"
+libraries[spyc][download][url] = "https://raw.github.com/mustangostang/spyc/79f61969f63ee77e0d9460bc254a27a671b445f3/spyc.php"
+libraries[spyc][download][filename] = "spyc.php"
+
 libraries[faker][download][type] = "get"
 libraries[faker][download][url] = "https://github.com/fzaninotto/Faker/archive/v1.3.0.tar.gz"
 

@@ -43,7 +43,7 @@ function signatures_queue_overview() {
  * Users hit this page when they click a validation link in an email to confirm
  * their signature. The link will look like this:
  *
- *   example.com/thank-you?k=[secret-validation-key]&m=[md5-hash-of-key]&p=[petition-id]
+ *   /thank-you?k=[secret-validation-key]&m=[md5-hash-of-key]&p=[petition-id]
  *
  * This page invokes the receive_signature_validation workflow which returns a
  * URL for a drupal_goto(), which will say "thank you" or provide and error
@@ -56,7 +56,7 @@ function _signatures_queue_validation_page_callback() {
     drupal_not_found();
   }
 
-  // Sanitize data coming in through URL. 
+  // Sanitize data coming in through URL.
   $validation_key = check_plain($_GET['k']);
   $md5 = check_plain($_GET['m']);
   $petition_id = check_plain($_GET['p']);
@@ -87,7 +87,7 @@ function _signatures_queue_validation_page_callback() {
   elseif ($response == 'error') {
     drupal_not_found();
   }
-  
+
   // If we get here, $response is a URL for a thank you page.
   drupal_goto($response, array(), 301);
 }
@@ -96,12 +96,26 @@ function _signatures_queue_validation_page_callback() {
  * Callback for thank-you/%.
  */
 function _signatures_queue_validated_page_callback($petition_id) {
-  $petition = petitions_data_get_petition($petition_id);
+  $conn = wh_petitions_mongo_petition_connection();
+  $petition = wh_petitions_load_petition($conn, $petition_id);
+
   if (!empty($petition)) {
-    // Load the petition via the API retrieve method.
-    $title = $petition['title'];
-    $output = "Thank you for signing '{$title}' Your signature has been counted.";
-    return $output;
+    $url = (!empty($petition['short_url'])) ? $petition['short_url'] : $petition['nice_url'];
+    $plain_petition_id = check_plain($petition_id);
+    $plain_petition_title = check_plain($petition['title']);
+    return theme('signatures_queue_validation_thank_you', array(
+      'petition' => $petition,
+      'page_title' => t('Thank you for signing this petition!'),
+      'message' => t('<p>You\'ve successfully signed the petition <a href="@petition_link">"!title"</a>. Your signature has been verified and counted.</p><p>Take the next step and gather support for it by sharing this petition on Twitter and Facebook, or by sharing a link to this petition: <a href="@petition_link">@petition_link</a></p>', array(
+        '@petition_link' => url($url, array('absolute' => TRUE)),
+        '!title' => drupal_ucfirst(check_plain($petition['title'])),
+      )),
+      'email_link' => wh_petition_tool_email_link(t('E-mail'), t('A We the People Petition'), t('I wanted to share this We the People petition with you: @petition_link', array(
+        '@petition_link' => url($url, array('absolute' => TRUE)),
+      ))),
+      'twitter_link' => wh_petition_tool_twitter_link($plain_petition_id, $plain_petition_title, 'petition', '', $petition['short_url'], $petition['nice_url']),
+      'facebook_link' => wh_petition_tool_facebook_link($plain_petition_id, $plain_petition_title, 'petition', '', $petition['nice_url']),
+    ));
   }
   else {
     drupal_goto('petition-error', array(), 301);

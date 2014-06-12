@@ -12,8 +12,21 @@
  *   The API key.
  * @param array $signature
  *   The signature argument received from the service request.
+ *
+ * @return array
+ *   A REST response array as formatted by api_services_responses_format().
  */
 function _api_signatures_resource_create($api_key, array $signature) {
+
+  // Verbose logging, if debugging is enabled.
+  if ($debug = variable_get('signatures_queue_enable_debugging', FALSE)) {
+    watchdog('api_signatures', '_api_signatures_resource_create() param $api_key: @api_key', array(
+      '@api_key' => $api_key,
+    ));
+    watchdog('api_signatures', '_api_signatures_resource_create() param $signature: @signature', array(
+       '@signature' => signatures_queue_format_for_logging($signature),
+    ));
+  }
 
   // Check for the required key.
   if (empty($api_key) || !api_key_manager_valid_key($api_key)) {

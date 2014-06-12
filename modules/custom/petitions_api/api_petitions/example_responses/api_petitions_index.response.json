@@ -1,6 +1,43 @@
 {
   "metadata": {
-    "executionTime": 0.020001
+    "responseInfo": {
+      "status": 200,
+      "developerMessage": "OK"
+    },
+    "requestInfo": {
+      "apiVersion": 1,
+      "resource": "petitions",
+      "query": {
+        "body": null,
+        "createdAfter": null,
+        "createdAt": null,
+        "createdBefore": null,
+        "isPublic": 1,
+        "isSignable": null,
+        "limit": 10,
+        "mock": null,
+        "offset": 0,
+        "petitionsDefaultLimit": "1000",
+        "publicThreshold": 1,
+        "responseId": null,
+        "signatureCount": null,
+        "signatureCountCeiling": null,
+        "signatureCountFloor": 0,
+        "signatureThreshold": null,
+        "signatureThresholdCeiling": null,
+        "signatureThresholdFloor": null,
+        "status": null,
+        "title": null,
+        "url": null,
+        "website_url": "https://petitions.whitehouse.gov"
+      }
+    },
+    "resultset": {
+      "count": 4,
+      "limit": 10,
+      "offset": 0
+    },
+    "executionTime": 0.004933119
   },
   "results": [
     {
@@ -77,7 +114,9 @@
       "deadline": 1363323600,
       "status": "pending response",
       "response": null,
-      "created": 1360908000
+      "created": 1360908000,
+      "isSignable": true,
+      "isPublic": true
     }
   ]
 }

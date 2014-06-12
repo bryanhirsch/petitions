@@ -26,6 +26,12 @@ function signatures_queue_configure() {
     '#description' => t('Maintain a log of workflow events, including start and completion times of each job, for reporting. Turn this off to reduce load on the database. Turn it on for debugging.'),
     '#default_value' => variable_get('signatures_queue_log_events', SIGNATURES_QUEUE_LOG_EVENTS_DEFAULT),
   );
+  $form['all']['signatures_queue_enable_debugging'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Enable debugging',
+    '#description' => t('Enable debugging mode. This does things like increase the amount of details logged via watchdog throughout the signature queue pipeline.'),
+    '#default_value' => variable_get('signatures_queue_enable_debugging', FALSE),
+  );
   $form['all']['signatures_queue_notify_email'] = array(
     '#type' => 'textfield',
     '#title' => 'Admin email to notify',
@@ -99,7 +105,9 @@ function signatures_queue_configure() {
   $form['archive_signatures']['signatures_queue_minimum_signature_lifetime'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum signature lifetime'),
-    '#description' => t('A signature must live for at least this long before being archived, regardless of other expiration criteria. Use @date_format, e.g., "2 weeks".', array('@date_format' => l('relative date format', 'http://www.php.net/manual/en/datetime.formats.relative.php'))),
+    '#description' => t('A signature must live for at least this long before being archived, regardless of other expiration criteria. Use <a href="@url">relative date format</a>, e.g., "2 weeks".', array(
+      '@url' => 'http://www.php.net/manual/en/datetime.formats.relative.php',
+    )),
     '#default_value' => variable_get('signatures_queue_minimum_signature_lifetime', '2 weeks'),
   );
   $form['archive_signatures']['signatures_queue_validation_grace_period'] = array(

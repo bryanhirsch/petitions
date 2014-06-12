@@ -15,6 +15,7 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
   protected $collection;
   protected $query = array();
 
+
   /**
    * Constructor.
    */
@@ -82,6 +83,14 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
   public function execute() {
     $results = array();
 
+    if (($this->getIsSignable() === TRUE) || ($this->getIsSignable() === FALSE)) {
+      $this->addIsSignableToQuery();
+    }
+
+    if (($this->getIsPublic() === TRUE) || ($this->getIsPublic() === FALSE)) {
+      $this->addIsPublicToQuery();
+    }
+
     if ($this->getCreatedDate()) {
       $this->addCreatedDateToQuery();
     }
@@ -128,7 +137,10 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
       'response_id',
     );
 
+    // WARNING: All query additions must happen prior to calling formatStatus().
+    $this->formatStatus();
     $query = $this->getQuery();
+
     $mongo_results = $this->getCollection()
       ->find($query, $fields)
       ->limit($this->getLimit())
@@ -334,9 +346,10 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
         '_id' => array('$in' => $mongo_ids),
       );
       $this->setQuery($query);
+      // Set statuses to disallow "flagged"/removed petitions.
+      $this->setStatusExclude(array(WH_PETITION_STATUS_FLAGGED));
     }
   }
-
 
   /**
    * Helper function to add $this->url as a query parameter.
@@ -344,13 +357,14 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
   protected function addURLToQuery() {
     // Filter by URL.
     if ($this->getURL()) {
-      $uri = explode($this->getBaseURL() . '/', $this->getURL());
-      $nice_url = $uri[1];
+      $nice_url = petitions_data_get_nice_url_from_full_url($this->getURL());
       $query = $this->getQuery();
       $query += array(
         'nice_url' => $nice_url,
       );
       $this->setQuery($query);
+      // Set statuses to disallow "flagged"/removed petitions.
+      $this->setStatusExclude(array(WH_PETITION_STATUS_FLAGGED));
     }
   }
 
@@ -387,18 +401,11 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
 
           break;
       }
-      $query = $this->getQuery();
-      $query += array(
-        'petition_status' => new MongoInt64($status),
-      );
-      $this->setQuery($query);
-    }
-    else {
-      $query = $this->getQuery();
-      $query += array(
-        'petition_status' => array('$ne' => new MongoInt64(WH_PETITION_STATUS_FLAGGED)),
-      );
-      $this->setQuery($query);
+
+      if (!empty($status)) {
+        // A status request has been made, so add it to included statuses.
+        $this->setStatusInclude((Array) $status);
+      }
     }
   }
 
@@ -416,6 +423,46 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
   }
 
   /**
+   * Helper function to add $this->isPublic as a query parameter.
+   */
+  protected function addIsPublicToQuery() {
+    $query = $this->getQuery();
+    // Petitions with any of the following status, are considered public.
+    $array_public_statuses = wh_petitions_public_statuses();
+
+    if ($this->getIsPublic()) {
+      // Request is for petitions that are public.
+      $this->setStatusInclude($array_public_statuses);
+
+    }
+    elseif ($this->getIsPublic() === FALSE) {
+      // Request is for petitions that are NOT public.
+      // Non-public petitions are not available through the index api.
+      // Return access denied with a message.
+      $developer_message = t('You need a petition id or url to access non-public petitions.');
+      api_errors_throw_error(403, $developer_message);
+    }
+  }
+
+  /**
+   * Helper function to add $this->isSignable as a query parameter.
+   */
+  protected function addIsSignableToQuery() {
+    $query = $this->getQuery();
+    // Petitions with any of the following status, are considered signable.
+    $array_signable_statuses = wh_petitions_signable_statuses();
+
+    if ($this->getIsSignable()) {
+      // Request is for petitions that are signable.
+      $this->setStatusInclude($array_signable_statuses);
+    }
+    elseif ($this->getIsSignable() === FALSE) {
+      // Request is for petitions that are NOT signable.
+      $this->setStatusExclude($array_signable_statuses);
+    }
+  }
+
+  /**
    * Helper function to format return response ID field.
    *
    * @param MongoId $id
@@ -426,5 +473,183 @@ class PetitionsSelectQueryMongo extends PetitionsSelectQuery {
    */
   protected function formatReturnId($id) {
     return $id->{'$id'};
+  }
+
+
+  /**
+   * Helper function to remove petition statuses from another array.
+   *
+   * @param array $original_status
+   *   The status(es) that already exist in the query from prior sets.
+   *
+   * @param array $status_to_remove
+   *   The status(es) that should be removed from the filter.
+   *
+   * @return array
+   *   The difference of the two arrays or $existing_status if
+   *   $additional_status is empty.
+   */
+  private function removeNINStatuses($original_status = array(), $status_to_remove = array()) {
+    if (empty($original_status) && !empty($status_to_remove)) {
+      // There is no status(es) to include , but some to exclude. Diff the
+      // $status_to_remove against the full array of possible statuses to end up
+      // with just the statuses we want.
+      $statuses_all_possible = wh_petitions_all_statuses();
+      return array_diff($statuses_all_possible, $status_to_remove);
+    }
+    elseif (!empty($status_to_remove)) {
+      return array_diff($original_status, $status_to_remove);
+    }
+    else {
+      return $original_status;
+    }
+
+  }
+
+  /**
+   * Get accessor for $query->statusInclude.
+   *
+   * @return array
+   *   Array of status ids to include in the query.
+   */
+  protected function getStatusInclude() {
+    $query = $this->getQuery();
+
+    if (!empty($query['petition_status_in'])) {
+      return $query['petition_status_in'];
+    }
+    else {
+      return array();
+    }
+  }
+
+  /**
+   * Set accessor for $query->statusInclude.
+   *
+   * @param array $statuses_to_add
+   *   An array of statuses to add to (intersect with) the include filter.
+   */
+  protected function setStatusInclude($statuses_to_add = array()) {
+
+    // Check that there is a status to be set.
+    if (!empty($statuses_to_add)) {
+
+      // Make sure it is an array, and not just a single status id.
+      $statuses_to_add = (is_array($statuses_to_add)) ? $statuses_to_add : (Array) $statuses_to_add;
+
+      // Load the current query.
+      $query = $this->getQuery();
+
+      // Get any existing include status(es).
+      $status_original = $this->getStatusInclude();
+
+      // Check to see if status(es) have already been set.
+      if (empty($status_original)) {
+        // There is no original status, so just set the status to the new one.
+        $statuses_processed = $statuses_to_add;
+      }
+      elseif (!empty($statuses_to_add)) {
+        // There is an original status(es) and a new status(es) to be added.
+        $statuses_processed = array_intersect($status_original, $statuses_to_add);
+
+      }
+      else {
+        // There are no new status(es) to add so pass the original through.
+        $statuses_processed = $status_original;
+      }
+
+      // This is a non-mongo style query array at this time.  It will get
+      // converted to mongo style just before the query is executed.
+      $query['petition_status_in'] = $statuses_processed;
+    }
+
+    $this->setQuery($query);
+  }
+
+
+  /**
+   * Get accessor for $query->statusExclude.
+   *
+   * @return array
+   *   Array of status ids to exclude from the query.
+   */
+  protected function getStatusExclude() {
+    $query = $this->getQuery();
+    if (!empty($query['petition_status_exclude'])) {
+      return $query['petition_status_exclude'];
+    }
+    else {
+      return array();
+    }
+  }
+
+
+  /**
+   * Set accessor for $query->status exclude.
+   *
+   * @param array $statuses_to_exclude
+   *   An array of statuses to extract from the include filter.
+   *
+   * @return array
+   *   Returns current instance of query array.
+   */
+  protected function setStatusExclude($statuses_to_exclude = array()) {
+    // Check that there is a status to be set.
+    if (!empty($statuses_to_exclude)) {
+      // Make sure it is an array, and not just a single status id.
+      $statuses_to_exclude = (is_array($statuses_to_exclude)) ? $statuses_to_exclude : (Array) $statuses_to_exclude;
+      // Load the current query.
+      $query = $this->getQuery();
+      // Get any existing excluded status(es).
+      $status_exclude_original = $this->getStatusExclude();
+      // Check to see if some status(es) have already been set.
+      if (empty($status_exclude_original)) {
+        // There is no original status, so just set the status to the new one.
+        $statuses_processed = $statuses_to_exclude;
+      }
+      elseif (!empty($statuses_to_exclude)) {
+        // There is an original status(es) and a new status(es) to be excluded
+        // as a union of all statuses not wanted.
+        $statuses_processed = array_unique(array_merge($status_exclude_original, $statuses_to_exclude));
+      }
+      else {
+        // There are no new status(es) to add so pass the original through.
+        $statuses_processed = $statuses_to_exclude;
+      }
+
+      // This is a non-mongo style query array at this time.  It will get
+      // converted to mongo style just before the query is executed.
+      $query['petition_status_exclude'] = $statuses_processed;
+    }
+    $this->setQuery($query);
+  }
+
+  /**
+   * Helper function to format the include and exclude statuses for Mongo.
+   */
+  protected function formatStatus() {
+    // Load the current query.
+    $query = $this->getQuery();
+    // Intercept the $query['petition_status_in'] & ['petition_status_exclude']
+    // which are a pair of flat arrays, to include and exclude.
+    $status_in = $this->getStatusInclude();
+    $status_nin = $this->getStatusExclude();
+
+    $status_to_query = $this->removeNINStatuses($status_in, $status_nin);
+    // Renumber keys so mongo doesn't throw a 500 error if the keys don't start
+    // with 0 and go in order.
+    sort($status_to_query);
+    // Remove non-mongofied statuses in the query array.
+    unset($query['petition_status_in']);
+    unset($query['petition_status_exclude']);
+    if (!empty($status_to_query)) {
+      $query['petition_status'] = array('$in' => (Array) $status_to_query);
+    }
+    else {
+      // Some combination of status filters have resulted in no filters,
+      // which is impossible to return.  Set this to nin for the entire status.
+      $query['petition_status'] = array('$nin' => wh_petitions_all_statuses());
+    }
+    $this->setQuery($query);
   }
 }

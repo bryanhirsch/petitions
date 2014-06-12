@@ -337,6 +337,10 @@ class Petition {
       case WH_PETITION_STATUS_REVIEWED:
         return "responded";
 
+      // Has been removed by administrative action.
+      case WH_PETITION_STATUS_FLAGGED:
+        return "removed";
+
       default:
         return "closed";
     }
@@ -579,6 +583,59 @@ class Petition {
   }
 
   /**
+   * Determine if petition is signable.
+   *
+   * Confirm petition has not passed dealine for accepting signatures. If it
+   * hasn't, petitions considered signable will be of one of these statuses:
+   *  - WH_PETITION_STATUS_PRIVATE: Is signable but only visible by direct link.
+   *  - WH_PETITION_STATUS_PUBLIC: Is public and signable.
+   *  - WH_PETITION_STATUS_UNDER_REVIEW: Has reached enough signatures for a
+   *    response, but has not been responded to, so can get more signatures.
+   *
+   * @return bool
+   *   TRUE if petition is signable, FALSE if not.
+   */
+  public function isSignable() {
+    if (!isset($this->status)) {
+      throw new Exception("Can't determine if petition is signable if petition status is not set.");
+    }
+
+    // Has the petition passed its deadline for accepting signatures?
+    if ($this->deadline < time()) {
+      return FALSE;
+    }
+
+    // A petition that has not passed its deadline is considered signable if its
+    // status can be found in the array returned by
+    // wh_petitions_signable_statuses().
+    $array_signable_statuses = wh_petitions_signable_statuses();
+    return (in_array($this->status, $array_signable_statuses)) ? TRUE : FALSE;
+  }
+
+
+  /**
+   * Determine if petition is public by looking at its numeric status.
+   *
+   * Petitions considered public will be of one of these statuses:
+   *  - WH_PETITION_STATUS_PUBLIC: By definition this is public.
+   *  - WH_PETITION_STATUS_UNDER_REVIEW:  No action has been taken on this.
+   *  - WH_PETITION_STATUS_REVIEWED: Has been reviewed and responded to.
+   *  - WH_PETITION_STATUS_CLOSED: Is closed but should still be visible.
+   *
+   * @return bool
+   *   TRUE if petition is public, FALSE if not.
+   */
+  public function isPublic() {
+    if (!isset($this->status)) {
+      throw new Exception("Can't determine if petition is public if petition status is not set.");
+    }
+    // A petition is considered public if its status can be found in the array
+    // returned by wh_petitions_public_statuses().
+    return (in_array($this->status, wh_petitions_public_statuses())) ? TRUE : FALSE;
+  }
+
+
+  /**
    * Converts into a publicly consumable array.
    *
    * @return array
@@ -599,6 +656,8 @@ class Petition {
       'status' => $this->formatStatus($this->getStatus()),
       'response' => $this->getResponse(),
       'created' => $this->getCreated(),
+      'isSignable' => $this->isSignable(),
+      'isPublic' => $this->isPublic(),
     );
 
     return $output;

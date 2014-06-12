@@ -316,6 +316,7 @@ function wh_petitions_petition_detail($petition_id) {
   global $base_url;
 
   $logged_in = ($user->uid > 0) ? TRUE : FALSE;
+  $login_required = (variable_get('petitions_signing_method', WH_PETITIONS_SIGNING_METHOD_REGISTRATION_REQUIRED) == WH_PETITIONS_SIGNING_METHOD_REGISTRATION_REQUIRED) ? TRUE : FALSE;
 
   // Make sure we got a petition id
   if (empty($petition_id)) {
@@ -524,24 +525,45 @@ function wh_petitions_petition_detail($petition_id) {
   $comment_form = '';
   $signature_url = '';
   $why_text = '';
+  // Do not display a form if user already signed it.
   if ($already_signed) {
     $signature_form = '';
   }
-  elseif (empty($user->uid)) {
-    $signature_form = l('Sign This Petition', 'user/login', array('attributes' => array('id' => 'button-sign-this-petition')));
-    $why_text = variable_get('wh_petitions_tooltip_why', '');
-  }
-  elseif (in_array($petition['petition_status'], array(WH_PETITION_STATUS_PRIVATE, WH_PETITION_STATUS_PUBLIC, WH_PETITION_STATUS_UNDER_REVIEW))) {
-    module_load_include('inc', 'wh_petitions', 'wh_petitions.form');
-    $signature_form = drupal_get_form('wh_petitions_sign_petition_form', $petition_id);
-    $signature_form = drupal_render($signature_form);
-    $comment_form = drupal_get_form('wh_petitions_comment_petition_form', $petition_id);
-    $comment_form = drupal_render($comment_form);
-    $signature_url = '';
-    $signature_url = $base_url . "/petition/form/sign/" . check_plain($petition_id);
-  }
+  // Petition hasn't been signed.
   else {
-    $signature_form = '';
+    // Check if login is required or if simplified login is on.
+    switch ($login_required) {
+      case TRUE:
+        // Prepare a button that will appear grayed out if the user is not logged in and the login/registration is required to sign.
+        if (!$logged_in) {
+          $signature_form = l('Sign This Petition', 'user/login', array('attributes' => array('id' => 'button-sign-this-petition')));
+          $why_text = variable_get('wh_petitions_tooltip_why', '');
+        }
+        // Display a direct sign button if user is authenticated and login is required to sign the petition.
+        elseif (in_array($petition['petition_status'], array(WH_PETITION_STATUS_PRIVATE, WH_PETITION_STATUS_PUBLIC, WH_PETITION_STATUS_UNDER_REVIEW))) {
+          module_load_include('inc', 'wh_petitions', 'wh_petitions.form');
+          $signature_form = drupal_get_form('wh_petitions_sign_petition_form', $petition_id);
+          $signature_form = drupal_render($signature_form);
+          $comment_form = drupal_get_form('wh_petitions_comment_petition_form', $petition_id);
+          $comment_form = drupal_render($comment_form);
+          $signature_url = '';
+          $signature_url = $base_url . "/petition/form/sign/" . check_plain($petition_id);
+        }
+        else {
+          $signature_form = '';
+        }
+        break;
+      case FALSE:
+      default:
+        // Regardless of user authentication, display a simplied signing form if chosen in settings.
+        // Both anonymous and authenticated users will be shown the same form.
+        // $signature_form = drupal_get_form('petitionssignatureform_signature_form', check_plain($petition_id));
+        // $signature_form = drupal_render($signature_form);
+
+        // Hide form in favor of displaying a side rail block version.
+        $signature_form = '';
+        break;
+    }
   }
 
   // Set the 'Report as Inappropriate' link if it should appear.  Should appear on public/private/under review
@@ -651,6 +673,7 @@ function wh_petitions_petition_detail($petition_id) {
     'signature_url' => $signature_url,
     'has_reported' => $has_reported,
     'logged_in' => $logged_in,
+    'login_required' => $login_required,
     'reported_link' => $reported_link,
     'why_text' => $why_text,
     'return_destination' => $return_destination,
@@ -813,14 +836,14 @@ function wh_petitions_get_signatures($petition_id, $petition_uid, $page, &$has_m
     $signatures[$i]['comment'] = check_plain($signatures[$i]['comment']);
     $signatures[$i]['number'] = wh_petitions_format_number($signatures[$i]['number']);
 
-    $username = $signatures[$i]['user']['username'];
-    $first_name = $signatures[$i]['user']['first_name'];
-    $last_name = $signatures[$i]['user']['last_name'];
+    $username = (!empty($signatures[$i]['user']['username'])) ? $signatures[$i]['user']['username'] : '';
+    $first_name = (!empty($signatures[$i]['user']['first_name'])) ? $signatures[$i]['user']['first_name'] : '';
+    $last_name = (!empty($signatures[$i]['user']['last_name'])) ? $signatures[$i]['user']['last_name'] : '';
     $name = petitions_signatures_display_style($username, $first_name, $last_name);
 
-    $zipcode = $signatures[$i]['user']['zip'];
-    $city = $signatures[$i]['user']['city'];
-    $state = $signatures[$i]['user']['state'];
+    $zipcode = (!empty($signatures[$i]['user']['zip'])) ? $signatures[$i]['user']['zip'] : '';
+    $city = (!empty($signatures[$i]['user']['city'])) ? $signatures[$i]['user']['city'] : '';
+    $state = (!empty($signatures[$i]['user']['state'])) ? $signatures[$i]['user']['state'] : '';
     $location = petitions_signatures_display_location_formatted($zipcode, $city, $state);
 
     if ($location) {
@@ -982,7 +1005,7 @@ function wh_petitions_user_dashboard() {
       'petition_link' => l(t('View'), $res['nice_url'], array('attributes' => array('class' => 'view'))),
       'cols' => 2,
       'petition_status' => $petition_status,
-      'petition_id' => check_plain($res['_id']->__toString()),
+      'petition_id' => check_plain((string) $res['_id']),
       'entry_num' => $count,
       'dashboard' => TRUE,
     ));

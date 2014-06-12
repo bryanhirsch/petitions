@@ -21,4 +21,3 @@ files[] = wh_petitions.generate.inc
 files[] = wh_petitions.module
 files[] = wh_petitions.pages.inc
 files[] = wh_petitions.tokens.inc
-

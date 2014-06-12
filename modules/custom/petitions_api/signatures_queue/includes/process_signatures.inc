@@ -1,13 +1,15 @@
 <?php
+
 /**
  * @file
  * The "process signatures" workflow.
  *
  * Signature processing includes these steps:
  *  - Match records from validations to signatures_pending_validation tables.
- *  - If signature (email address) does not have corresponding user, create one.
+ *  - If signature (email address) does not have a corresponding user, create
+ *    one.
  *  - If a signature record with this email does not exist in
- *    petition_signatures, create one, and get the signature id.
+ *    petition_signatures create one, and get the signature id.
  */
 
 /**
@@ -84,8 +86,21 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
       if (!$item['signature_id']) {
         // Create new record in petition_signatures.
         $item['signature_id'] = _signatures_queue_process_signatures_create_record($item, $user);
-        // Increment signature count if this is a new signature.
+        // New signature was created successfully. Increment signature count.
         wh_petitions_increment_count($item['petition_id']);
+      }
+      else {
+        // Log failure.
+        $watchdog_suffix = _signatures_queue_watchdog_suffix('process_signatures', $job_id, $server_name, $worker_name);
+        watchdog('signatures_queue', 'New signature could not be created. secret_validation_key: @secret_validation_key, vid: @vid, petition_id: @petition_id, timestamp_validated: @timestamp_validated. @suffix', array(
+          '@secret_validation_key' => $item['secret_validation_key'],
+          '@vid' => $item['vid'],
+          '@petition_id' => $item['petition_id'],
+          '@timestamp_validated' => $item['timestamp_validated'],
+          '@suffix' => $watchdog_suffix,
+        ), WATCHDOG_CRITICAL);
+        // Do NOT move items to processed table or remove from preprocess table.
+        continue;
       }
     }
 
@@ -106,8 +121,17 @@ function _signatures_queue_process_signatures($job_id, $server_name, $worker_nam
     _signatures_queue_process_signatures_move_to_processed($item);
 
     // Subscribe to list if requested.
-    // Turned off until further review...
-    // _signatures_queue_process_signatures_list_subscribe($item);
+    if ((bool) $item['signup']) {
+      $signatory = array(
+        'first_name' => $item['first_name'],
+        'last_name' => $item['last_name'],
+        'email' => $item['email'],
+        'zip' => $item['zip'],
+        'petition_id' => $item['petition_id'],
+      );
+      module_invoke_all('petition_signatory_opt_in', $signatory);
+    }
+
     $count++;
   }
 
@@ -340,33 +364,4 @@ function _signatures_queue_process_signatures_move_to_processed($item) {
 
   // Set the active database back to default.
   db_set_active();
-}
-
-/**
- * Sign up user to email list if requested.
- *
- * @@ Placeholder function for now.
- *
- * @param string $item
- *   The item from the database query.
- *
- * @return bool
- *   Returns TRUE on success.
- */
-function _signatures_queue_process_signatures_list_subscribe($item) {
-  // For now we skip this step.
-  return;
-
-  // Check if user signed up for email list.
-  if ($item['signup']) {
-    /*
-     * Check for GovDelivery list and add the topic id if it wasn't
-     * in the petition object previously.
-     */
-    $topic_title = 'petitions_' . $petition['_id']->__toString();
-    $topic_id = '';
-
-    // Add their email to GovDelivery.
-    govdelivery_subscriber_api_add_subscriber($user->mail, $topic_title, $topic_id);
-  }
 }

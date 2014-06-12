@@ -981,7 +981,7 @@ function wh_petitions_admin_petitions() {
 
     // Feature link.
     $featured = '<div id="featured-' . check_plain($id) . '" class="featured" style="display:inline;cursor:pointer;"><a>' . t('Feature') . '</a></div>';
-    if ($res['featured']) {
+    if (!empty($res['featured'])) {
       $featured = '<div id="featured-' . check_plain($id) . '" class="featured" style="display:inline;cursor:pointer;"><a>' . t('Un-Feature') . '</a></div>';
     }
 
@@ -1075,18 +1075,48 @@ function wh_petitions_admin_petitions() {
 }
 
 /**
+ * Page callback: Displays form for petitions settings page.
+ */
+function wh_petitions_admin_petitions_settings_form() {
+  $form = array();
+  $form['petitions_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Petitions settings'),
+  );
+  $form['petitions_settings']['petitions_signing_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('Signing method'),
+    '#description' => t('The "Registraion required" signing method requires users to explicitly create an account and log in to sign petitions. The "Simplified signing" method allows them to sign via a simple form and to validate their signature via email instead of logging in. A Drupal cache clear is required to make a change in this setting take effect.'),
+    '#default_value' => variable_get('petitions_signing_method', WH_PETITIONS_SIGNING_METHOD_REGISTRATION_REQUIRED),
+    '#options' => array(
+      WH_PETITIONS_SIGNING_METHOD_REGISTRATION_REQUIRED => t('Registration required'),
+      WH_PETITIONS_SIGNING_METHOD_SIMPLIFIED_SIGNING => t('Simplified signing'),
+    ),
+    '#access' => module_exists('petitionssignatureform'),
+  );
+  $form['related_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Related settings'),
+  );
+  $form['related_settings']['links'] = array(
+    '#type' => 'markup',
+    '#markup' => wh_petitions_admin_petitions_settings_links(),
+  );
+  return system_settings_form($form);
+}
+
+/**
  * Page callback: Displays links to various petitions settings pages.
  */
 function wh_petitions_admin_petitions_settings_links() {
-  $links = array(
-    'items' => array(
-      l('Petitions Data', 'admin/config/services/petitions_data'),
-      l('Petition Signatures Queue', 'admin/config/system/signatures-queue'),
-      l('Petition Tool', 'admin/config/system/petitions'),
-      l('Petition Tool Hub', 'admin/config/system/petition-tool-hub'),
-      l('Petitions Users Statistics', 'admin/config/services/stats/users'),
-    ),
-  );
+  $links['items'][] = l(t('Petition Signatures Queue'), 'admin/config/system/signatures-queue');
+  $links['items'][] = l(t('Petition Tool'), 'admin/config/system/petitions');
+  $links['items'][] = l(t('Petition Tool Hub'), 'admin/config/system/petition-tool-hub');
+  $links['items'][] = l(t('Petitions Data'), 'admin/config/services/petitions_data');
+  if (module_exists('petitionssignatureform') && user_access('administer petitionssignatureform')) {
+    $links['items'][] = l(t('Petitions Signature Form'), 'admin/config/services/petitionssignatureform');
+  }
+  $links['items'][] = l(t('Petitions Users Statistics'), 'admin/config/services/stats/users');
   return theme('item_list', $links);
 }
 
@@ -1179,7 +1209,7 @@ function wh_petitions_admin_petitions_tags_submit($form, &$form_state) {
 
   // Get the private keywords.
   $tags = explode(', ', $form_state['values']['private_tags']);
-  for ($i = 0; $i < sizeof($tags); $i++) {
+  for ($i = 0; $i < count($tags); $i++) {
     $tags[$i] = trim(strip_tags(strtolower($tags[$i])));
   }
 
@@ -1276,7 +1306,7 @@ function wh_petitions_bookmark_petitions($petition_id) {
       exit;
     }
     else {
-      $size = sizeof($petition['bookmarked']);
+      $size = count($petition['bookmarked']);
       $new_array = array();
       for ($i = 0; $i < $size; $i++) {
         if ($user->uid != $petition['bookmarked'][$i]) {
@@ -1469,17 +1499,16 @@ function wh_petitions_download_signatures($petition_id, $time_stamp) {
   }
 }
 
-
 /**
  * Batch API call-back for generating a list of petition signatures.
  *
- * @param String $petition_id
+ * @param string $petition_id
  *   The ID of the petiton for which signatures should be pulled.
- * @param Int $limit
+ * @param int $limit
  *   Number of elements to process in each run of the operation.
- * @param String $file_name
+ * @param string $file_name
  *   Name of the file to which results should be written.
- * @param Context $context
+ * @param array $context
  *   Batch API state holder.
  */
 function wh_petitions_download_signatures_batch($petition_id, $limit, $file_name, $report_type, &$context) {
